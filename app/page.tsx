@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Workflow, ArrowRight, Zap, Users, Shield } from "lucide-react";
+import { Workflow, ArrowRight, Zap, Users, Shield, CheckCircle, Sparkles, Globe } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -10,116 +10,153 @@ export default function Home() {
   // redirect('/dashboard');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/50">
-      <div className="container mx-auto px-4 py-16">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background gradient effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-violet-50 via-background to-blue-50 dark:from-violet-950/20 dark:via-background dark:to-blue-950/20" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-gradient-radial from-primary/20 via-transparent to-transparent blur-3xl" />
+      
+      <div className="container relative mx-auto px-4 py-8">
         {/* Header */}
-        <div className="text-center mb-16">
-          <div className="flex justify-center mb-6">
+        <div className="text-center mb-12 space-y-4 animate-in">
+          <div className="flex justify-center mb-4">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center size-12 rounded-xl bg-custom-primary text-white">
+              <div className="flex items-center justify-center size-12 rounded-2xl bg-gradient-to-br from-primary to-violet-600 text-white shadow-lg shadow-primary/25">
                 <Workflow className="size-6" />
               </div>
-              <h1 className="text-4xl font-bold">Lua</h1>
+              <h1 className="text-4xl font-bold gradient-text">Lua</h1>
             </div>
           </div>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Build intelligent intake flows and automate client communication with our powerful flow builder platform.
+          
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground max-w-3xl mx-auto leading-tight">
+            AI Voice Intake Assistant
+            <span className="block text-2xl md:text-3xl mt-2 text-muted-foreground font-medium">
+              For Legal Professionals
+            </span>
+          </h2>
+          
+          <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
+            Automate client intake calls with our voice assistant. 
+            Manage communications and grow your practice.
           </p>
-          <div className="flex gap-4 justify-center">
-            <Button asChild size="lg">
+          
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button asChild size="lg" className="group">
               <Link href="/dashboard">
-                Get Started <ArrowRight className="ml-2 size-4" />
+                Get Started Free
+                <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
               </Link>
             </Button>
-            <Button variant="outline" asChild size="lg">
+            <Button variant="outline" asChild size="lg" className="group">
               <Link href="/templates">
+                <Sparkles className="mr-2 size-4" />
                 Browse Templates
               </Link>
             </Button>
           </div>
+          
+          {/* Trust badges */}
+          <div className="flex items-center justify-center gap-6 mt-8 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="size-4 text-green-500" />
+              <span>ABA Approved</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Shield className="size-4 text-green-500" />
+              <span>SOC2 Compliant</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Globe className="size-4 text-green-500" />
+              <span>GDPR Ready</span>
+            </div>
+          </div>
         </div>
 
         {/* Features */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Zap className="size-5 text-custom-primary" />
-                Easy Flow Builder
-              </CardTitle>
-              <CardDescription>
-                Create complex intake flows with our intuitive wizard-based interface.
+        <div className="grid md:grid-cols-3 gap-4 max-w-5xl mx-auto">
+          <Card className="group hover:shadow-lg transition-all duration-300 border-muted/50 hover:border-primary/20">
+            <CardHeader className="pb-3">
+              <div className="size-10 rounded-lg bg-gradient-to-br from-primary/10 to-violet-600/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Zap className="size-5 text-primary" />
+              </div>
+              <CardTitle className="text-lg">Visual Flow Builder</CardTitle>
+              <CardDescription className="text-sm">
+                Create complex intake flows with our intuitive drag-and-drop interface.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Design multi-step forms with conditional logic, branching paths, and dynamic responses.
-              </p>
+            <CardContent className="pt-0">
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="size-3 text-primary mt-1 shrink-0" />
+                  <span>Multi-step forms with conditional logic</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="size-3 text-primary mt-1 shrink-0" />
+                  <span>Branching paths & dynamic responses</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="size-3 text-primary mt-1 shrink-0" />
+                  <span>Real-time preview & testing</span>
+                </li>
+              </ul>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="size-5 text-custom-primary" />
-                Client Management
-              </CardTitle>
-              <CardDescription>
+          <Card className="group hover:shadow-lg transition-all duration-300 border-muted/50 hover:border-primary/20">
+            <CardHeader className="pb-3">
+              <div className="size-10 rounded-lg bg-gradient-to-br from-primary/10 to-violet-600/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Users className="size-5 text-primary" />
+              </div>
+              <CardTitle className="text-lg">Client Management</CardTitle>
+              <CardDescription className="text-sm">
                 Streamline client intake and automate follow-up communications.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Collect, organize, and manage client information with integrated tools and workflows.
-              </p>
+            <CardContent className="pt-0">
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="size-3 text-primary mt-1 shrink-0" />
+                  <span>Automated email & SMS notifications</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="size-3 text-primary mt-1 shrink-0" />
+                  <span>Client portal with progress tracking</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="size-3 text-primary mt-1 shrink-0" />
+                  <span>Integrated CRM capabilities</span>
+                </li>
+              </ul>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="size-5 text-custom-primary" />
-                Secure & Reliable
-              </CardTitle>
-              <CardDescription>
-                Enterprise-grade security with data protection and compliance features.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Your data is protected with industry-standard encryption and security protocols.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* CTA Section */}
-        {/*
-        <div className="text-center">
-          <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-              <CardTitle>Ready to get started?</CardTitle>
-              <CardDescription>
-                Create your first intake flow in minutes with our pre-built templates or start from scratch.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4 justify-center">
-                <Button asChild>
-                  <Link href="/flows/new">
-                    Create New Flow
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/dashboard">
-                    View Dashboard
-                  </Link>
-                </Button>
+          <Card className="group hover:shadow-lg transition-all duration-300 border-muted/50 hover:border-primary/20">
+            <CardHeader className="pb-3">
+              <div className="size-10 rounded-lg bg-gradient-to-br from-primary/10 to-violet-600/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <Shield className="size-5 text-primary" />
               </div>
+              <CardTitle className="text-lg">Enterprise Security</CardTitle>
+              <CardDescription className="text-sm">
+                Bank-level security with compliance features built-in.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="size-3 text-primary mt-1 shrink-0" />
+                  <span>256-bit SSL encryption</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="size-3 text-primary mt-1 shrink-0" />
+                  <span>HIPAA & GDPR compliant</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="size-3 text-primary mt-1 shrink-0" />
+                  <span>Regular security audits</span>
+                </li>
+              </ul>
             </CardContent>
           </Card>
         </div>
-        */}
       </div>
     </div>
   );

@@ -2,69 +2,97 @@
 
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { EyeIcon, ZapIcon, FileTextIcon } from "lucide-react"; // Example icons
+import { Badge } from "@/components/ui/badge";
+import { Eye, Zap, FileText } from "lucide-react";
 
 interface TemplateCardProps {
   title: string;
   description: string;
-  icon?: React.ReactNode; // Allow passing an icon component
-  onPreview?: () => void; // Placeholder for actions
-  onUseTemplate?: () => void; // Placeholder for actions
+  icon?: React.ReactNode;
+  category?: string;
+  popularity?: string;
+  onPreview?: () => void;
+  onUseTemplate?: () => void;
 }
 
-export default function TemplateCard({ title, description, icon, onPreview, onUseTemplate }: TemplateCardProps) {
+export default function TemplateCard({ 
+  title, 
+  description, 
+  icon, 
+  category,
+  popularity,
+  onPreview, 
+  onUseTemplate 
+}: TemplateCardProps) {
   return (
-    <Card className="group relative flex flex-col justify-between h-full overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      <CardHeader>
-        <div className="flex items-center gap-3 mb-2">
-          {icon || <FileTextIcon className="h-8 w-8 text-custom-primary" />} {/* Default icon */}
-          <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-            {title}
-          </CardTitle>
+    <Card className="group relative flex flex-col h-full overflow-hidden hover:shadow-md transition-all duration-200 border-muted/50 hover:border-primary/20">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="p-2 rounded-lg bg-gradient-to-br from-primary/10 to-violet-600/10 text-primary">
+            {icon || <FileText className="h-8 w-8" />}
+          </div>
+          {popularity && (
+            <Badge 
+              variant="secondary" 
+              className={
+                popularity === "Popular" 
+                  ? "bg-orange-500/10 text-orange-700 border-orange-200 dark:border-orange-800" 
+                  : popularity === "New"
+                  ? "bg-blue-500/10 text-blue-700 border-blue-200 dark:border-blue-800"
+                  : ""
+              }
+            >
+              {popularity}
+            </Badge>
+          )}
         </div>
+        <CardTitle className="text-lg font-semibold line-clamp-2">
+          {title}
+        </CardTitle>
+        {category && (
+          <Badge variant="outline" className="mt-2 w-fit">
+            {category}
+          </Badge>
+        )}
       </CardHeader>
-      <CardContent className="flex-grow">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+      
+      <CardContent className="flex-grow pb-4">
+        <p className="text-sm text-muted-foreground line-clamp-3">
           {description}
         </p>
       </CardContent>
-      <CardFooter className="pt-4">
-        {/* Empty footer or add permanent content here if needed */}
-      </CardFooter>
       
-      {/* Hover overlay positioned relative to the entire card */}
-      <div className="absolute inset-0 bg-black/60 dark:bg-black/75 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl">
-        <div className="flex flex-col sm:flex-row gap-3 px-4">
+      <CardFooter className="pt-0 pb-4 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex gap-2 w-full">
           <Button 
             variant="outline" 
-            className="bg-white text-custom-primary hover:bg-gray-100 border-custom-primary hover:border-custom-primary/80 shadow-sm"
+            size="sm"
+            className="flex-1"
             onClick={(e) => {
               e.stopPropagation();
-              // TODO: Implement preview functionality
               if (onPreview) {
                 onPreview();
               }
-              console.log('Preview template:', title);
             }}
           >
-            <EyeIcon className="mr-2 h-4 w-4" /> Preview
+            <Eye className="mr-2 h-3 w-3" />
+            Preview
           </Button>
           <Button 
-            variant="default"
-            className="shadow-sm"
+            size="sm"
+            className="flex-1"
             onClick={(e) => {
               e.stopPropagation();
-              // TODO: Implement use template functionality
               if (onUseTemplate) {
                 onUseTemplate();
               }
-              console.log('Use template:', title);
             }}
           >
-            <ZapIcon className="mr-2 h-4 w-4" /> Use Template
+            <Zap className="mr-2 h-3 w-3" />
+            Use
           </Button>
         </div>
-      </div>
+      </CardFooter>
     </Card>
   );
 } 
