@@ -5,13 +5,11 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Question, AnswerType } from '@/types/flow';
+import { Question } from '@/types/flow';
 import {
     GripVerticalIcon,
     Edit3Icon,
     Trash2Icon,
-    ChevronUpIcon,
-    ChevronDownIcon,
     ArrowUpIcon,
     ArrowDownIcon
 } from 'lucide-react';

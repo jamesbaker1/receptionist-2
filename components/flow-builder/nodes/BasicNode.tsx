@@ -1,15 +1,15 @@
 'use client';
 
 import React from 'react';
-import { BaseNode, NodeType, NodeHandle, HandleType, HandlePosition } from '../../../types/flow';
+import { BaseNode, NodeType, NodeHandle, /*HandleType,*/ HandlePosition } from '../../../types/flow';
 
 interface BasicNodeProps {
   node: BaseNode;
   selected?: boolean;
-  onClick?: (nodeId: string, event: React.MouseEvent | React.TouchEvent) => void;
+  // onClick?: (nodeId: string, event: React.MouseEvent | React.TouchEvent) => void;
 }
 
-const BasicNode: React.FC<BasicNodeProps> = ({ node, selected, onClick }) => {
+const BasicNode: React.FC<BasicNodeProps> = ({ node, selected }) => {
   const { id, type, data, position, width = 150, height = 50 } = node;
 
   let backgroundColor = 'bg-blue-500';
@@ -27,15 +27,15 @@ const BasicNode: React.FC<BasicNodeProps> = ({ node, selected, onClick }) => {
     label = 'Action Node';
   }
 
-  const handleNodeClick = (event: React.MouseEvent | React.TouchEvent) => {
-    if (onClick) {
-      onClick(id, event);
-    }
-  };
+  // const handleNodeClick = (event: React.MouseEvent | React.TouchEvent) => {
+  //   if (onClick) {
+  //     onClick(id, event);
+  //   }
+  // };
 
   const renderHandles = (handles: NodeHandle[]) => {
     return handles.map(handle => {
-      let handleStyle: React.CSSProperties = {
+      const handleStyle: React.CSSProperties = {
         position: 'absolute',
         width: '10px',
         height: '10px',
@@ -86,7 +86,7 @@ const BasicNode: React.FC<BasicNodeProps> = ({ node, selected, onClick }) => {
     >
       <div className="font-bold mb-1">{label} (ID: {id})</div>
       {type === NodeType.Message && data && 'text' in data && (
-        <p className="truncate">{(data as any).text}</p>
+        <p className="truncate">{(data as { text: string }).text}</p>
       )}
       {node.handles && renderHandles(node.handles)}
     </div>

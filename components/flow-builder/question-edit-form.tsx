@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { useForm, useFieldArray /*, Controller*/ } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+// import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -19,9 +19,11 @@ const getFormAnswerType = (enumValue: FlowAnswerTypeEnum): QuestionFormValues['a
 };
 
 // Helper to convert form string value back to enum (if needed, though onSubmit provides string union)
+/*
 const getEnumAnswerType = (formValue: QuestionFormValues['answerType']): FlowAnswerTypeEnum => {
     return FlowAnswerTypeEnum[formValue.toUpperCase().replace("-", "_") as keyof typeof FlowAnswerTypeEnum] || FlowAnswerTypeEnum.TEXT;
 };
+*/
 
 interface QuestionEditFormProps {
   question: Question; // The question object from types/flow.ts
@@ -72,7 +74,7 @@ export default function QuestionEditForm({ question, onSubmit, onCancel, classNa
                         ? (question.options?.map(o => ({ value: o })) || [{ value: "" }, { value: "" }]) 
                         : [],
     });
-  }, [question, form.reset]);
+  }, [question, form]);
 
   const handleSubmit = (values: QuestionFormValues) => {
     const dataToSubmit = {

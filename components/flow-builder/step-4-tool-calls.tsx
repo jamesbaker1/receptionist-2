@@ -8,10 +8,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BriefcaseIcon, CalendarDaysIcon, InboxIcon, MailIcon, PhoneCallIcon } from 'lucide-react'; // Placeholder icons
 import { Input } from '@/components/ui/input';
 
+interface ToolsConfig {
+  [key: string]: {
+    enabled: boolean;
+    config?: Tool['config'];
+  };
+}
+
 interface Step4ToolCallsProps {
-  onSubmit: (data: { toolsConfig?: any }) => void; // Define a proper type later
+  onSubmit: (data: { toolsConfig?: ToolsConfig }) => void; // Define a proper type later
   onBack: () => void;
-  initialData?: { toolsConfig?: any };
+  // initialData?: { toolsConfig?: ToolsConfig };
 }
 
 interface Tool {
@@ -70,9 +77,9 @@ const mockTools: Tool[] = [
   },
 ];
 
-export default function Step4ToolCalls({ onSubmit, onBack, initialData }: Step4ToolCallsProps) {
+export default function Step4ToolCalls({ onSubmit, onBack }: Step4ToolCallsProps) {
   const [tools, setTools] = React.useState<Tool[]>(mockTools);
-  const [selectedTool, setSelectedTool] = React.useState<Tool | null>(null);
+  // const [selectedTool, setSelectedTool] = React.useState<Tool | null>(null);
 
   const handleToolToggle = (toolId: string) => {
     setTools(prevTools => 
@@ -97,7 +104,7 @@ export default function Step4ToolCalls({ onSubmit, onBack, initialData }: Step4T
         config: tool.config
       };
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as ToolsConfig);
     
     console.log('Step 4 Data:', { toolsConfig });
     onSubmit({ toolsConfig });

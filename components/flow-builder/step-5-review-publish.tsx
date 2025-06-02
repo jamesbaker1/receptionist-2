@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 // import { type FlowData } from 'app/flows/new/page'; // Path will be removed or defined locally
-import { ArrowRightIcon, CheckCircle2Icon, ListChecksIcon, MilestoneIcon, Settings2Icon, WorkflowIcon } from 'lucide-react';
+import { ArrowRightIcon, ListChecksIcon, MilestoneIcon, Settings2Icon, WorkflowIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { type QuestionFormValues } from "./question-form-modal"; // Assuming this is correct
 import { type LogicRule } from "./step-3-conditional-logic"; // Assuming this is correct
@@ -31,11 +31,16 @@ interface Step3Data {
 }
 
 interface Step4Data {
-    toolCalls: Array<{
-        id: string;
-        name: string;
-        details: string;
-    }>;
+    toolsConfig?: {
+        [key: string]: {
+            enabled: boolean;
+            config?: {
+                transferNumber?: string;
+                triggerQuestion?: string;
+                triggerResponse?: string;
+            };
+        };
+    };
 }
 
 interface StepGoodbyeData {
@@ -68,7 +73,7 @@ interface Step5ReviewPublishProps {
 }
 
 export default function Step5ReviewPublish({ flowData, onPublish, onBack }: Step5ReviewPublishProps) {
-  const { step1Data, stepIntroductionData, step2Data, step3Data, step4Data, stepGoodbyeData } = flowData;
+  const { step1Data, step2Data, step3Data, step4Data } = flowData;
 
   const getQuestionTextById = (questionId: string): string => {
     if (questionId === END_CALL_ID) return END_CALL_TEXT;
@@ -186,7 +191,7 @@ export default function Step5ReviewPublish({ flowData, onPublish, onBack }: Step
                 <Card key={rule.id} className='p-3 bg-white dark:bg-gray-800 shadow-sm text-sm'>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold">Flow {index + 1}: </span>
-                    <span>When client answers <strong>"{getQuestionTextById(rule.sourceQuestionId)}"</strong></span>
+                    <span>When client answers <strong>&quot;{getQuestionTextById(rule.sourceQuestionId)}&quot;</strong></span>
                     {rule.conditions.map((condition, condIndex) => (
                       <React.Fragment key={condIndex}>
                         {condIndex > 0 && <span className="font-medium">{condition.operator}</span>}
@@ -208,7 +213,7 @@ export default function Step5ReviewPublish({ flowData, onPublish, onBack }: Step
                       </React.Fragment>
                     ))}
                     <ArrowRightIcon className="h-4 w-4 text-gray-500 dark:text-gray-400 mx-1.5" />
-                    <span>then ask them <strong>"{getQuestionTextById(rule.targetQuestionId)}"</strong></span>
+                    <span>then ask them <strong>&quot;{getQuestionTextById(rule.targetQuestionId)}&quot;</strong></span>
                     {rule.isDefault && <Badge variant="secondary">Default Path</Badge>}
                   </div>
                 </Card>
@@ -218,16 +223,37 @@ export default function Step5ReviewPublish({ flowData, onPublish, onBack }: Step
         )}
 
         {/* Step 4: Tool Calls */}
-        {step4Data?.toolCalls && step4Data.toolCalls.length > 0 && (
+        {step4Data?.toolsConfig && Object.keys(step4Data.toolsConfig).length > 0 && (
           <AccordionItem value="item-4">
             <AccordionTrigger className='text-lg font-medium'>
-              <WorkflowIcon className="h-5 w-5 mr-2 text-custom-primary" /> Automated Actions ({step4Data.toolCalls.length})
+              <WorkflowIcon className="h-5 w-5 mr-2 text-custom-primary" /> Automated Actions ({Object.keys(step4Data.toolsConfig).length})
             </AccordionTrigger>
             <AccordionContent className="pt-2 pl-2 space-y-2">
-              {step4Data.toolCalls.map((tool: any, index: number) => (
-                <Card key={tool.id || index} className='p-3 bg-white dark:bg-gray-800 shadow-sm'>
-                  <p className="font-medium text-gray-800 dark:text-gray-100">{tool.name}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{tool.details}</p>
+              {Object.entries(step4Data.toolsConfig).map(([toolId, toolConfig]) => (
+                <Card key={toolId} className='p-3 bg-white dark:bg-gray-800 shadow-sm'>
+                  <p className="font-medium text-gray-800 dark:text-gray-100">{toolId}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {toolConfig.enabled ? 'Enabled' : 'Disabled'}
+                  </p>
+                  {toolConfig.config && (
+                    <>
+                      {toolConfig.config.transferNumber && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          Transfer Number: {toolConfig.config.transferNumber}
+                        </p>
+                      )}
+                      {toolConfig.config.triggerQuestion && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          Trigger Question: {toolConfig.config.triggerQuestion}
+                        </p>
+                      )}
+                      {toolConfig.config.triggerResponse && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          Trigger Response: {toolConfig.config.triggerResponse}
+                        </p>
+                      )}
+                    </>
+                  )}
                 </Card>
               ))}
             </AccordionContent>

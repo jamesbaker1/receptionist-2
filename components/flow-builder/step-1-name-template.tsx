@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Sparkles, ArrowRight, Building, Users, Shield, Heart, Scale } from "lucide-react";
+import { FileText, Sparkles, ArrowRight, Users, Shield, Scale } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 // Mock templates with better categorization
@@ -102,7 +102,7 @@ export default function Step1NameTemplate({ onSubmit, initialData }: Step1NameTe
       flowName: newFlowName,
       templateId: newTemplateId,
     });
-  }, [initialData, form.reset]);
+  }, [initialData, form]);
 
   function handleSubmit(values: z.infer<typeof formSchema>) {
     console.log("Step 1 Data:", values);

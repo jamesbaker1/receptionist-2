@@ -33,7 +33,7 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
   onCanvasClick,
   onCanvasContextMenu,
 }) => {
-  const { canvasView, canvasConfig, pan, zoomIn, zoomOut, zoomTo, transformCoordinates } = useFlowCanvas();
+  const { canvasView, canvasConfig, pan, /*zoomIn, zoomOut,*/ zoomTo, transformCoordinates } = useFlowCanvas();
   const canvasRef = useRef<HTMLDivElement>(null);
 
   // Dragging state
@@ -178,21 +178,20 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
   }, [nodes, onNodeDrag, onNodeDragStart, pan, canvasConfig.snapToGrid, canvasConfig.gridSize, transformCoordinates]);
 
   // Combined MouseUp and TouchEnd handler
-  const handleMouseUpOrTouchEnd = useCallback((event?: ReactMouseEvent | ReactTouchEvent | MouseEvent) => {
-    const upEvent = event as ReactMouseEvent; // Assume mouse event for clientX/Y for click check
+  const handleMouseUpOrTouchEnd = useCallback((event?: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => {
+    const upEvent = event as ReactMouseEvent;
     const eventTarget = potentialClickTarget.current;
     
     if (draggingNodeId.current) {
-      // Check if it was a click or a drag
       const movedDistance = mouseDownPosition.current && upEvent && upEvent.clientX ? Math.hypot(upEvent.clientX - mouseDownPosition.current.x, upEvent.clientY - mouseDownPosition.current.y) : CLICK_TRESHOLD_PX + 1;
       
       if (movedDistance < CLICK_TRESHOLD_PX && eventTarget) {
         const nodeElement = (eventTarget as HTMLElement).closest('[data-node-id]') as HTMLElement | null;
         if (nodeElement && nodeElement.dataset.nodeId === draggingNodeId.current && onNodeClick) {
-            onNodeClick(draggingNodeId.current, upEvent as any);
+            onNodeClick(draggingNodeId.current, upEvent as ReactMouseEvent | ReactTouchEvent);
         }
-      } else if (onNodeDragStop && document.body.style.cursor.includes('grabbing')) { // Was a drag
-        onNodeDragStop(draggingNodeId.current, upEvent as any);
+      } else if (onNodeDragStop && document.body.style.cursor.includes('grabbing')) {
+        onNodeDragStop(draggingNodeId.current, upEvent as ReactMouseEvent | ReactTouchEvent);
       }
     }
 
@@ -329,12 +328,12 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
 
   // Add global mouse up listener to handle cases where mouse up occurs outside the canvas
   useEffect(() => {
-    const currentCanvasRef = canvasRef.current;
+    // const currentCanvasRef = canvasRef.current;
     // Mouse up listener
     window.addEventListener('mouseup', handleMouseUpOrTouchEnd);
     // Touch end listener for global release, helps if finger slides off canvas
-    window.addEventListener('touchend', handleMouseUpOrTouchEnd as any);
-    window.addEventListener('touchcancel', handleMouseUpOrTouchEnd as any);
+    window.addEventListener('touchend', handleMouseUpOrTouchEnd as (event: TouchEvent) => void);
+    window.addEventListener('touchcancel', handleMouseUpOrTouchEnd as (event: TouchEvent) => void);
 
     // Passive event listeners for touchmove and wheel to allow scrolling if not handled
     // currentCanvasRef?.addEventListener('touchmove', handleTouchMove as any, { passive: false });
@@ -342,8 +341,8 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
 
     return () => {
       window.removeEventListener('mouseup', handleMouseUpOrTouchEnd);
-      window.removeEventListener('touchend', handleMouseUpOrTouchEnd as any);
-      window.removeEventListener('touchcancel', handleMouseUpOrTouchEnd as any);
+      window.removeEventListener('touchend', handleMouseUpOrTouchEnd as (event: TouchEvent) => void);
+      window.removeEventListener('touchcancel', handleMouseUpOrTouchEnd as (event: TouchEvent) => void);
       // currentCanvasRef?.removeEventListener('touchmove', handleTouchMove as any);
       // currentCanvasRef?.removeEventListener('wheel', handleWheelZoom as any);
     };
@@ -366,7 +365,7 @@ const FlowCanvas: React.FC<FlowCanvasProps> = ({
       onMouseMove={handleMouseMove}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
-      onTouchEnd={handleMouseUpOrTouchEnd as any} // Reuse mouse up logic for touch end
+      onTouchEnd={handleMouseUpOrTouchEnd as (event: ReactTouchEvent<HTMLDivElement>) => void} // Reuse mouse up logic for touch end
       onClick={handleCanvasClickInternal} // Use internal handler
       onContextMenu={handleContextMenu} // Attach context menu handler
     >

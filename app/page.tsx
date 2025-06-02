@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Workflow, ArrowRight, Zap, Users, Shield, CheckCircle, Sparkles, Globe } from "lucide-react";

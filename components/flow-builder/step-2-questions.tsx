@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import QuestionFormModal, { type QuestionFormValues, answerTypes } from "./question-form-modal";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Edit2Icon, Trash2Icon, PlusCircleIcon, ListChecksIcon, MessageSquareTextIcon, AlertTriangleIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,7 +26,7 @@ export default function Step2Questions({ onSubmit, initialData, onBack }: Step2Q
     } else if (questions.length > 0) {
         setQuestions([]);
     }
-  }, [initialData?.questions]);
+  }, [initialData?.questions, questions]);
 
   const handleAddQuestion = (data: QuestionFormValues) => {
     if (editingQuestion && editingQuestion.id) {
@@ -88,7 +88,7 @@ export default function Step2Questions({ onSubmit, initialData, onBack }: Step2Q
         <div className="text-center py-10 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
           <ListChecksIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
           <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-gray-100">No questions yet</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Click "Add Question" to get started.</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Click &quot;Add Question&quot; to get started.</p>
         </div>
       ) : (
         <div className="space-y-4">

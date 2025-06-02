@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from 'react';
+import React/*, { useEffect }*/ from 'react';
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,9 +15,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { PlusCircleIcon, Trash2Icon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+/*
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
+*/
 
 export const answerTypes = [
   "Text", 
@@ -80,10 +82,10 @@ interface QuestionFormModalProps {
   onOpenChange: (isOpen: boolean) => void;
   onSubmit: (data: QuestionFormValues) => void;
   initialData?: Partial<QuestionFormValues>;
-  existingQuestionIds?: string[];
+  // existingQuestionIds?: string[];
 }
 
-export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, initialData, existingQuestionIds = [] }: QuestionFormModalProps) {
+export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, initialData /*, existingQuestionIds = []*/ }: QuestionFormModalProps) {
   const form = useForm<QuestionFormValues>({
     resolver: zodResolver(questionSchema),
     defaultValues: {
@@ -107,7 +109,7 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
     name: "radioOptions",
   });
 
-  const { fields: rangeFields, append: appendRange, remove: removeRange } = useFieldArray({
+  const { fields: rangeFields, append: appendRange/*, remove: removeRange*/ } = useFieldArray({
     control: form.control,
     name: "rangeOptions",
   });
@@ -137,7 +139,7 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
       ],
       multiSelectOptions: initialData?.multiSelectOptions || [{ value: "", label: "" }],
     });
-  }, [initialData, form.reset]);
+  }, [initialData, form.reset, form]);
 
   const handleSubmit = (values: QuestionFormValues) => {
     const dataToSubmit = {

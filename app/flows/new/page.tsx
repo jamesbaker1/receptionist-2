@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from "@/components/ui/button";
-import { CheckCircle, Circle, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Progress } from "@/components/ui/progress";
+import { CheckCircle } from 'lucide-react';
 
 // Step Components
 import Step1NameTemplate from "@/components/flow-builder/step-1-name-template";
@@ -16,7 +15,7 @@ import Step4ToolCalls from "@/components/flow-builder/step-4-tool-calls";
 import StepGoodbyeGreeting from "@/components/flow-builder/step-goodbye-greeting";
 import Step5ReviewPublish from "@/components/flow-builder/step-5-review-publish";
 import { type QuestionFormValues } from "@/components/flow-builder/question-form-modal";
-import { flowTemplates } from "@/mocks/templates"; // Import flowTemplates
+import { flowTemplates } from "@/mocks/templates";
 
 interface Step1Data {
   flowName: string;
@@ -36,16 +35,28 @@ interface Step3Data {
 }
 
 interface Step4Data {
-  toolCalls: Array<{
-    id: string;
-    name: string;
-    details: string;
-  }>;
+  toolsConfig?: {
+    [key: string]: {
+      enabled: boolean;
+      config?: {
+        transferNumber?: string;
+        triggerQuestion?: string;
+        triggerResponse?: string;
+      };
+    };
+  };
 }
 
 interface StepGoodbyeData {
   goodbyeGreeting: string;
 }
+
+interface Step5Data {
+  reviewComplete: boolean;
+}
+
+// Union type for all possible step data structures
+type StepData = Step1Data | StepIntroductionData | Step2Data | Step3Data | Step4Data | StepGoodbyeData | Step5Data;
 
 // Add other step data interfaces as needed
 
@@ -56,21 +67,21 @@ export interface FlowData {
   step3Data?: Step3Data;
   step4Data?: Step4Data;
   stepGoodbyeData?: StepGoodbyeData;
-  step5Data?: any; // This key is more for step tracking in the array, not for data storage for review step
+  step5Data?: Step5Data;
   [key: `step${number}Complete`]: boolean | undefined;
 }
 
 const steps = [
-  { id: 1, name: "Name & Template", description: "Choose a template and name your flow", component: Step1NameTemplate, dataKey: "step1Data" as keyof FlowData },
-  { id: 2, name: "Intro Greeting", description: "Set the opening message", component: StepIntroductionGreeting, dataKey: "stepIntroductionData" as keyof FlowData },
-  { id: 3, name: "Questions", description: "Add questions to collect information", component: Step2Questions, dataKey: "step2Data" as keyof FlowData },
-  { id: 4, name: "Conditional Logic", description: "Create branching paths", component: Step3ConditionalLogic, dataKey: "step3Data" as keyof FlowData },
-  { id: 5, name: "Tool Calls", description: "Configure integrations", component: Step4ToolCalls, dataKey: "step4Data" as keyof FlowData },
-  { id: 6, name: "Goodbye", description: "Set the closing message", component: StepGoodbyeGreeting, dataKey: "stepGoodbyeData" as keyof FlowData },
-  { id: 7, name: "Review", description: "Review and publish your flow", component: Step5ReviewPublish, dataKey: "step5Data" as keyof FlowData },
+  { id: 1, name: "Name & Template", description: "Choose a template and name your flow", component: Step1NameTemplate, dataKey: "step1Data" as const },
+  { id: 2, name: "Intro Greeting", description: "Set the opening message", component: StepIntroductionGreeting, dataKey: "stepIntroductionData" as const },
+  { id: 3, name: "Questions", description: "Add questions to collect information", component: Step2Questions, dataKey: "step2Data" as const },
+  { id: 4, name: "Conditional Logic", description: "Create branching paths", component: Step3ConditionalLogic, dataKey: "step3Data" as const },
+  { id: 5, name: "Tool Calls", description: "Configure integrations", component: Step4ToolCalls, dataKey: "step4Data" as const },
+  { id: 6, name: "Goodbye", description: "Set the closing message", component: StepGoodbyeGreeting, dataKey: "stepGoodbyeData" as const },
+  { id: 7, name: "Review", description: "Review and publish your flow", component: Step5ReviewPublish, dataKey: "step5Data" as const },
 ];
 
-export default function NewFlowPage() {
+function NewFlowPageContent() {
   const [currentStep, setCurrentStep] = useState(1);
   const [flowData, setFlowData] = useState<FlowData>({});
   const searchParams = useSearchParams();
@@ -102,7 +113,7 @@ export default function NewFlowPage() {
         setFlowData(prev => ({
           ...prev,
           step1Data: {
-            ...(prev.step1Data || { flowName: '' }), 
+            ...(prev.step1Data || { flowName: '' }),
             templateId: flowTemplates.find(t => t.id === 'blank')?.id || '',
           },
           stepIntroductionData: {
@@ -116,12 +127,23 @@ export default function NewFlowPage() {
     }
   }, [searchParams]);
 
-  const handleNextStep = (stepOutput: any) => {
+  const handleNextStep = (stepOutput: StepData | undefined) => {
+    if (!stepOutput) return;
     const currentStepConfig = steps[currentStep - 1];
-    setFlowData(prev => ({ ...prev, [currentStepConfig.dataKey]: stepOutput }));
+    const dataKey = currentStepConfig.dataKey as keyof FlowData;
+    
+    // Handle the specific case for Step4ToolCalls
+    if (currentStep === 5 && 'toolsConfig' in stepOutput) {
+        const step4Data: Step4Data = { toolsConfig: stepOutput.toolsConfig };
+        setFlowData(prev => ({ ...prev, [dataKey]: step4Data }));
+    } else if (typeof stepOutput !== 'boolean') {
+        setFlowData(prev => ({ ...prev, [dataKey]: stepOutput }));
+    }
+    
     setFlowData(prev => ({ ...prev, [`step${currentStep}Complete`]: true }));
+
     if (currentStep < steps.length) {
-      setCurrentStep(prev => prev + 1);
+        setCurrentStep(prev => prev + 1);
     }
   };
 
@@ -140,8 +162,13 @@ export default function NewFlowPage() {
   // Update breadcrumbs in MainLayout (this is a conceptual note, actual implementation would need context/state management)
   // For now, MainLayout's breadcrumb is static. Dynamic breadcrumbs would be a later enhancement.
 
-  const ActiveStepComponent = steps[currentStep - 1].component;
   const progress = ((currentStep - 1) / (steps.length - 1)) * 100;
+  // const activeStepDataKey = steps[currentStep - 1].dataKey;
+  // const步骤 = watch("steps");
+
+  // const结婚 = () => {
+  //   // ... existing code ...
+  // };
 
   return (
     <div className="w-full space-y-8">
@@ -203,50 +230,10 @@ export default function NewFlowPage() {
                 left: `${(100 / (steps.length - 1)) * index + (50 / (steps.length - 1))}%`,
                 width: `${100 / (steps.length - 1) - (100 / (steps.length - 1) * 0.5)}%`
               }}
-              />
+            ></div>
             )}
           </React.Fragment>
         ))}
-      </div>
-
-      {/* Step Indicator - Mobile */}
-      <div className="lg:hidden">
-        <div className="flex items-center justify-between mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handlePreviousStep}
-            disabled={currentStep === 1}
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Previous
-          </Button>
-          <div className="flex items-center gap-2">
-            {steps.map((step) => (
-              <div
-                key={step.id}
-                className={`
-                  h-2 rounded-full transition-all duration-300
-                  ${currentStep === step.id 
-                    ? 'w-8 bg-primary' 
-                    : currentStep > step.id 
-                    ? 'w-2 bg-primary/50' 
-                    : 'w-2 bg-muted-foreground/20'
-                  }
-                `}
-              />
-            ))}
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleNextStep(flowData[steps[currentStep - 1].dataKey])}
-            disabled={currentStep === steps.length}
-          >
-            Next
-            <ArrowRight className="h-4 w-4 ml-1" />
-          </Button>
-        </div>
       </div>
 
       {/* Step Content with Animation */}
@@ -259,17 +246,64 @@ export default function NewFlowPage() {
           transition={{ duration: 0.3 }}
           className="bg-card rounded-lg border p-6 shadow-sm w-full"
         >
-          <ActiveStepComponent
-            onSubmit={handleNextStep}
-            onBack={handlePreviousStep}
-            // @ts-ignore
-            initialData={flowData[steps[currentStep-1].dataKey]}
-            questions={flowData.step2Data?.questions || []}
-            flowData={flowData}
-            onPublish={handlePublish}
-          />
+          {currentStep === 1 && (
+            <Step1NameTemplate
+              onSubmit={handleNextStep}
+              initialData={flowData.step1Data}
+            />
+          )}
+          {currentStep === 2 && (
+            <StepIntroductionGreeting
+              onSubmit={handleNextStep}
+              onBack={handlePreviousStep}
+              initialData={flowData.stepIntroductionData}
+            />
+          )}
+          {currentStep === 3 && (
+            <Step2Questions
+              onSubmit={handleNextStep}
+              onBack={handlePreviousStep}
+              initialData={flowData.step2Data}
+            />
+          )}
+          {currentStep === 4 && (
+            <Step3ConditionalLogic
+              onSubmit={handleNextStep}
+              onBack={handlePreviousStep}
+              initialData={flowData.step3Data}
+              questions={flowData.step2Data?.questions || []}
+            />
+          )}
+          {currentStep === 5 && (
+            <Step4ToolCalls
+              onSubmit={handleNextStep}
+              onBack={handlePreviousStep}
+            />
+          )}
+          {currentStep === 6 && (
+            <StepGoodbyeGreeting
+              onSubmit={handleNextStep}
+              onBack={handlePreviousStep}
+              initialData={flowData.stepGoodbyeData}
+            />
+          )}
+          {currentStep === 7 && (
+            <Step5ReviewPublish
+              flowData={flowData}
+              onPublish={handlePublish}
+              onBack={handlePreviousStep}
+            />
+          )}
         </motion.div>
       </AnimatePresence>
     </div>
   );
-} 
+}
+
+export default function NewFlowPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <NewFlowPageContent />
+    </Suspense>
+  );
+}

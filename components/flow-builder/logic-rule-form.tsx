@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input'; // For potential future use with text conditions
-import { Question, LogicRule, AnswerType as FlowAnswerTypeEnum } from '@/types/flow';
+// import { Input } from '@/components/ui/input'; // For potential future use with text conditions
+import { Question, /* LogicRule, */ AnswerType as FlowAnswerTypeEnum } from '@/types/flow';
 
 export const logicRuleSchema = z.object({
   id: z.string().optional(),
@@ -57,7 +57,7 @@ export default function LogicRuleForm({
         condition: initialData?.condition || "",
         targetQuestionId: initialData?.targetQuestionId || "",
     });
-  }, [initialData, form.reset]);
+  }, [initialData, form]);
 
   const getAvailableConditions = () => {
     switch (sourceQuestion.type) {
@@ -89,7 +89,7 @@ export default function LogicRuleForm({
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <DialogHeader>
               <DialogTitle>{initialData?.id ? 'Edit Logic Rule' : 'Add New Logic Rule'}</DialogTitle>
-              <p className='text-sm text-muted-foreground'>For question: "{sourceQuestion.text}"</p>
+              <p className='text-sm text-muted-foreground'>For question: &quot;{sourceQuestion.text}&quot;</p>
             </DialogHeader>
 
             <FormField
@@ -101,7 +101,7 @@ export default function LogicRuleForm({
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder={`Select a condition based on "${sourceQuestion.type}" type`} />
+                        <SelectValue placeholder={`Select a condition based on &quot;${sourceQuestion.type}&quot; type`} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -133,6 +133,12 @@ export default function LogicRuleForm({
                       {availableTargetQuestions.map(q => (
                         <SelectItem key={q.id} value={q.id}>{q.text.substring(0,50)}{q.text.length > 50 ? "..." : ""}</SelectItem>
                       ))}
+                      <SelectItem value="startsWith">Starts with</SelectItem>
+                      <SelectItem value="endsWith">Ends with</SelectItem>
+                      <SelectItem value="isNumeric">Is numeric</SelectItem>
+                      <SelectItem value="isNotNumeric">Is not numeric</SelectItem>
+                      <SelectItem value="isTrue">Is &quot;True&quot;</SelectItem>
+                      <SelectItem value="isFalse">Is &quot;False&quot;</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

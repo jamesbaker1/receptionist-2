@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircleIcon, Trash2Icon, ArrowRightIcon, AlertTriangleIcon, Edit2Icon } from "lucide-react";
-import { type QuestionFormValues, answerTypes } from "./question-form-modal"; // Assuming this path is correct
+import { PlusCircleIcon, Trash2Icon, Edit2Icon, ArrowRightIcon } from "lucide-react";
+import { type QuestionFormValues } from "./question-form-modal"; // Assuming this path is correct
 import { nanoid } from 'nanoid';
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -251,36 +251,24 @@ export default function Step3ConditionalLogic({
                           setCurrentRule(prev => ({ ...prev, conditions: newConditions }));
                         }}
                       />
-                      {currentRule.conditions && currentRule.conditions.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeCondition(index)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2Icon className="h-4 w-4" />
-                          <span className="sr-only">Remove condition</span>
-                        </Button>
-                      )}
+                      <Button variant="ghost" size="icon" onClick={() => removeCondition(index)} className="text-destructive">
+                        <Trash2Icon className="h-4 w-4" />
+                      </Button>
                     </div>
+                  )}
+                  {index === 0 && currentRule.conditions && currentRule.conditions.length === 1 && (
+                     <div className="col-span-1"/> // Spacer to align remove button
                   )}
                 </div>
               ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addCondition}
-                className="mt-2"
-              >
-                <PlusCircleIcon className="mr-2 h-4 w-4" /> Add Condition
+              <Button variant="outline" size="sm" onClick={addCondition}>
+                <PlusCircleIcon className="mr-2 h-4 w-4" /> Add Condition Group
               </Button>
             </div>
 
             {/* Target Question */}
             <div className="space-y-1">
-              <Label>Then ask them</Label>
+              <Label>Then navigate to</Label>
               <Select
                 value={currentRule.targetQuestionId}
                 onValueChange={(val: string) => setCurrentRule({ ...currentRule, targetQuestionId: val })}
@@ -289,36 +277,35 @@ export default function Step3ConditionalLogic({
                   <SelectValue placeholder="Select next question..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableTargetQuestions.map(q => <SelectItem key={q.id} value={q.id!}>{q.questionText}</SelectItem>)}
+                  {availableTargetQuestions.map(q => (
+                    <SelectItem key={q.id} value={q.id!}>
+                      {q.questionText.length > 50 ? `${q.questionText.substring(0, 50)}...` : q.questionText}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Default Rule Checkbox */}
+            {currentRule.sourceQuestionId && (
+                <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox 
+                        id={`default-rule-${currentRule.id}`} 
+                        checked={currentRule.isDefault || false}
+                        onCheckedChange={(checked) => setCurrentRule(prev => ({...prev, isDefault: !!checked}))}
+                    />
+                    <Label htmlFor={`default-rule-${currentRule.id}`} className="text-sm font-normal">
+                        Make this the default path if no conditions for &quot;{getQuestionTextById(currentRule.sourceQuestionId!)}&quot; are met.
+                    </Label>
+                </div>
+            )}
 
-            {/* Default Path */}
-            <div className="space-y-1">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="default-path"
-                  checked={currentRule.isDefault}
-                  onCheckedChange={(checked: boolean) => setCurrentRule(prev => ({ ...prev, isDefault: checked }))}
-                />
-                <Label htmlFor="default-path">This is a default path (if no other conditions match)</Label>
-              </div>
-            </div>
           </div>
-
-          {/* Help Text */}
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md">
-            <p className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>Tip:</strong> You can create complex conditions by combining multiple rules with AND/OR logic. For example, you might want to ask about income verification if they own a Honda Civic AND their income is less than $50,000.
-            </p>
-          </div>
-
-          <div className="flex justify-end gap-2 mt-4">
-            {editingRule && <Button type="button" variant="outline" onClick={() => {setEditingRule(null); setCurrentRule({id: nanoid(5)})}}>Cancel</Button>}
-            <Button type="button" onClick={handleSave} disabled={!currentRule.sourceQuestionId || !currentRule.targetQuestionId}>
-              {editingRule ? "Update Rule" : "Save Rule"}
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button variant="ghost" onClick={() => { setEditingRule(null); setCurrentRule({ id: nanoid(5), conditions: [{ type: 'EQUALS', value: '', operator: 'AND' }] }); }}>
+              Cancel
             </Button>
+            <Button onClick={handleSave}>{editingRule ? "Update Rule" : "Save Rule"}</Button>
           </div>
         </CardContent>
       </Card>
@@ -327,70 +314,55 @@ export default function Step3ConditionalLogic({
 
   return (
     <div className="space-y-6 p-1">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Define Question Flow</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Create rules that determine what questions to ask next based on the client's answers.
-          </p>
-        </div>
-        <Button onClick={() => setEditingRule({ id: nanoid(5), sourceQuestionId: '', targetQuestionId: '', conditions: [{ type: 'EQUALS', value: '', operator: 'AND' }] })} disabled={questions.length < 1}>
-          <PlusCircleIcon className="mr-2 h-4 w-4" /> Add Rule
-        </Button>
+      <div>
+        <h2 className="text-2xl font-semibold">Conditional Logic</h2>
+        <p className="text-muted-foreground mt-1">
+          Create rules to guide users through the flow based on their answers. Example: IF &apos;Question A&apos; is &apos;Yes&apos; THEN go to &apos;Question C&apos;.
+        </p>
       </div>
 
-      {editingRule && renderRuleForm()}
+      {renderRuleForm()}
 
-      {logicRules.length === 0 && !editingRule && (
-        <div className="text-center py-10 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-          <AlertTriangleIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-          <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-gray-100">No flow rules yet</h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Click "Add Rule" to define what questions should follow each answer.</p>
-          {questions.length < 1 && <p className="mt-1 text-xs text-orange-500">Add at least one question in Step 2 before creating rules.</p>}
+      {logicRules.length === 0 ? (
+        <div className="text-center py-10 border-2 border-dashed rounded-lg">
+          <ArrowRightIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+          <h3 className="mt-2 text-lg font-medium">No logic rules yet</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Add rules to create conditional paths in your flow.
+          </p>
         </div>
-      )}
-
-      {logicRules.length > 0 && (
-        <div className="space-y-3">
-          {logicRules.map((rule, index) => (
-            <Card key={rule.id} className="bg-white dark:bg-gray-800 shadow-sm">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2 text-sm flex-grow flex-wrap">
-                  <span className="font-semibold">Rule {index + 1}:</span>
-                  <span>When client answers <strong>"{getQuestionTextById(rule.sourceQuestionId)}"</strong></span>
-                  {rule.conditions.map((condition, condIndex) => (
-                    <React.Fragment key={condIndex}>
-                      {condIndex > 0 && <span className="font-medium">{condition.operator}</span>}
-                      <span>
-                        {condition.type === 'EQUALS' && 'equals'}
-                        {condition.type === 'NOT_EQUALS' && 'does not equal'}
-                        {condition.type === 'GREATER_THAN' && 'is greater than'}
-                        {condition.type === 'LESS_THAN' && 'is less than'}
-                        {condition.type === 'IN_RANGE' && 'is between'}
-                        {condition.type === 'CONTAINS' && 'contains'}
-                        {condition.type === 'NOT_CONTAINS' && 'does not contain'}
-                        {' '}
-                        <strong>
-                          {Array.isArray(condition.value)
-                            ? `${condition.value[0]} and ${condition.value[1]}`
-                            : condition.value}
-                        </strong>
-                      </span>
-                    </React.Fragment>
-                  ))}
-                  <ArrowRightIcon className="h-4 w-4 text-gray-500 dark:text-gray-400 mx-1" />
-                  <span>then ask them <strong>"{getQuestionTextById(rule.targetQuestionId)}"</strong></span>
-                  {rule.isDefault && <Badge variant="secondary">Default Path</Badge>}
-                </div>
-                <div className="flex gap-1 ml-2 flex-shrink-0 mt-2">
-                  <Button variant="ghost" size="icon" onClick={() => startEditRule(rule)} className="h-8 w-8 text-gray-500 hover:text-custom-primary">
-                    <Edit2Icon className="h-4 w-4" />
-                    <span className="sr-only">Edit rule</span>
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => deleteRule(rule.id)} className="h-8 w-8 text-gray-500 hover:text-destructive">
-                    <Trash2Icon className="h-4 w-4" />
-                    <span className="sr-only">Delete rule</span>
-                  </Button>
+      ) : (
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Existing Logic Rules</h3>
+          {logicRules.map(rule => (
+            <Card key={rule.id} className="bg-muted/50">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1 flex-grow">
+                    <p className="text-sm font-semibold">
+                      IF <Badge variant="secondary" className="mr-1">{getQuestionTextById(rule.sourceQuestionId)}</Badge>
+                      {rule.conditions.map((cond, idx) => (
+                        <React.Fragment key={idx}>
+                          {idx > 0 && <span className="font-bold text-xs mx-1">{cond.operator}</span>}
+                          <Badge variant="outline" className="mx-0.5">
+                            {cond.type} &quot;{String(cond.value)}&quot;
+                          </Badge>
+                        </React.Fragment>
+                      ))}
+                    </p>
+                    <p className="text-sm">
+                      THEN go to <Badge variant="secondary">{getQuestionTextById(rule.targetQuestionId)}</Badge>
+                      {rule.isDefault && <Badge variant="default" className="ml-2 text-xs">DEFAULT</Badge>}
+                    </p>
+                  </div>
+                  <div className="flex gap-1 ml-2">
+                    <Button variant="ghost" size="icon" onClick={() => startEditRule(rule)} className="h-8 w-8">
+                        <Edit2Icon className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => deleteRule(rule.id)} className="h-8 w-8 text-destructive">
+                      <Trash2Icon className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -399,7 +371,9 @@ export default function Step3ConditionalLogic({
       )}
 
       <div className="flex justify-between items-center mt-8">
-        <Button variant="outline" onClick={onBack}>Back to Questions</Button>
+        <Button variant="outline" onClick={onBack}>
+          Back to Questions
+        </Button>
         <Button onClick={handleFormSubmit}>
           Next: Tool Calls
         </Button>
