@@ -19,7 +19,7 @@ const mockFlows: { id: string; title: string; lastEdited: string; status: FlowSt
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-6">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">

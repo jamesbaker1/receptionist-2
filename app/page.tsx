@@ -34,7 +34,7 @@ export default function Home() {
           </h2>
           
           <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
-            Automate client intake calls with our voice assistant. 
+            Automate client calls with our voice assistant. 
             Manage communications and grow your practice.
           </p>
           
