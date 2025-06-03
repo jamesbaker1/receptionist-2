@@ -13,8 +13,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { PlusCircleIcon, Trash2Icon } from "lucide-react";
+import { PlusCircleIcon, Trash2Icon, HelpCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 /*
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
@@ -54,6 +65,9 @@ export const questionSchema = z.object({
     value: z.string().min(1, "Option cannot be empty."),
     label: z.string(),
   })).optional(),
+  // Advanced fields
+  adminNotes: z.string().optional(),
+  customId: z.string().optional(),
 }).refine(data => {
   if (data.answerType === "Radio") {
     return data.radioOptions && data.radioOptions.length >= 2;
@@ -101,6 +115,8 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
         { min: 100000, max: Infinity, label: "Over $100,000" }
       ],
       multiSelectOptions: initialData?.multiSelectOptions || [{ value: "", label: "" }],
+      adminNotes: initialData?.adminNotes || "",
+      customId: initialData?.customId || "",
     },
   });
 
@@ -138,12 +154,15 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
         { min: 100000, max: Infinity, label: "Over $100,000" }
       ],
       multiSelectOptions: initialData?.multiSelectOptions || [{ value: "", label: "" }],
+      adminNotes: initialData?.adminNotes || "",
+      customId: initialData?.customId || "",
     });
   }, [initialData, form.reset, form]);
 
   const handleSubmit = (values: QuestionFormValues) => {
     const dataToSubmit = {
       ...values,
+      id: values.customId || values.id, // Use custom ID if provided, otherwise use auto-generated
       radioOptions: values.answerType === "Radio" ? values.radioOptions : undefined,
       rangeOptions: values.answerType === "Range" ? values.rangeOptions : undefined,
       multiSelectOptions: values.answerType === "MultiSelect" ? values.multiSelectOptions : undefined,
@@ -169,6 +188,7 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
             </DialogHeader>
             
             <div className="px-6 space-y-4 flex-1 overflow-y-auto pb-8">
+              {/* Primary Fields - Always Visible */}
               <FormField
                 control={form.control}
                 name="questionText"
@@ -212,163 +232,7 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
                 )}
               />
 
-              {currentAnswerType === "Numeric" && (
-                <div className="space-y-3 pt-2">
-                  <FormLabel>Numeric Validation</FormLabel>
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="numericValidation.min"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Minimum Value</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              {...field} 
-                              onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="numericValidation.max"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Maximum Value</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              {...field}
-                              onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <FormField
-                    control={form.control}
-                    name="numericValidation.allowDecimals"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormLabel>Allow decimal values</FormLabel>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
-
-              {currentAnswerType === "Range" && (
-                <div className="space-y-3 pt-2">
-                  <FormLabel>Range Options</FormLabel>
-                  {rangeFields.map((item, index) => (
-                    <div key={item.id} className="grid grid-cols-3 gap-2">
-                      <FormField
-                        control={form.control}
-                        name={`rangeOptions.${index}.min`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                placeholder="Min" 
-                                {...field}
-                                onChange={e => field.onChange(Number(e.target.value))}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`rangeOptions.${index}.max`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                placeholder="Max" 
-                                {...field}
-                                onChange={e => field.onChange(Number(e.target.value))}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`rangeOptions.${index}.label`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input placeholder="Label" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => appendRange({ min: 0, max: 0, label: "" })}
-                    className="mt-2"
-                  >
-                    <PlusCircleIcon className="mr-2 h-4 w-4" /> Add Range
-                  </Button>
-                </div>
-              )}
-
-              {currentAnswerType === "MultiSelect" && (
-                <div className="space-y-3 pt-2">
-                  <FormLabel>Multi-select Options</FormLabel>
-                  {multiSelectFields.map((item, index) => (
-                    <FormField
-                      key={item.id}
-                      control={form.control}
-                      name={`multiSelectOptions.${index}.label`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex items-center gap-2">
-                            <FormControl>
-                              <Input placeholder={`Option ${index + 1}`} {...field} />
-                            </FormControl>
-                            {multiSelectFields.length > 2 && (
-                              <Button type="button" variant="ghost" size="icon" onClick={() => removeMultiSelect(index)} className="text-destructive hover:text-destructive">
-                                <Trash2Icon className="h-4 w-4" />
-                                <span className="sr-only">Remove option</span>
-                              </Button>
-                            )}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => appendMultiSelect({ value: "", label: "" })}
-                    className="mt-2"
-                  >
-                    <PlusCircleIcon className="mr-2 h-4 w-4" /> Add Option
-                  </Button>
-                </div>
-              )}
-
+              {/* Conditional Fields Based on Answer Type - Basic Configuration */}
               {currentAnswerType === "Radio" && (
                 <div className="space-y-3 pt-2">
                   <FormLabel>Radio Options</FormLabel>
@@ -406,6 +270,259 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
                   </Button>
                 </div>
               )}
+
+              {currentAnswerType === "MultiSelect" && (
+                <div className="space-y-3 pt-2">
+                  <FormLabel>Multi-select Options</FormLabel>
+                  {multiSelectFields.map((item, index) => (
+                    <FormField
+                      key={item.id}
+                      control={form.control}
+                      name={`multiSelectOptions.${index}.value`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-center gap-2">
+                            <FormControl>
+                              <Input placeholder={`Option ${index + 1}`} {...field} />
+                            </FormControl>
+                            {multiSelectFields.length > 2 && (
+                              <Button type="button" variant="ghost" size="icon" onClick={() => removeMultiSelect(index)} className="text-destructive hover:text-destructive">
+                                <Trash2Icon className="h-4 w-4" />
+                                <span className="sr-only">Remove option</span>
+                              </Button>
+                            )}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => appendMultiSelect({ value: "", label: "" })}
+                    className="mt-2"
+                  >
+                    <PlusCircleIcon className="mr-2 h-4 w-4" /> Add Option
+                  </Button>
+                </div>
+              )}
+
+              {/* Advanced Settings Accordion */}
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="advanced-settings">
+                  <AccordionTrigger>Advanced Settings</AccordionTrigger>
+                  <AccordionContent className="space-y-4">
+                    
+                    {/* Custom ID Field */}
+                    <FormField
+                      control={form.control}
+                      name="customId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            Custom Question ID
+                            <Tooltip delayDuration={300}>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Override the auto-generated ID with a custom identifier for this question.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., legal_concern_primary" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Admin Notes Field */}
+                    <FormField
+                      control={form.control}
+                      name="adminNotes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center">
+                            Admin Notes
+                            <Tooltip delayDuration={300}>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Internal notes about this question for admin reference. Not visible to users.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Internal notes about this question for admins..." 
+                              {...field} 
+                              rows={2} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Numeric Validation - Moved to Advanced */}
+                    {currentAnswerType === "Numeric" && (
+                      <div className="space-y-3 pt-2">
+                        <FormLabel className="flex items-center">
+                          Numeric Validation
+                          <Tooltip delayDuration={300}>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Set constraints on what numeric values users can enter.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </FormLabel>
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="numericValidation.min"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Minimum Value</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    {...field} 
+                                    onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="numericValidation.max"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Maximum Value</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    {...field}
+                                    onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <FormField
+                          control={form.control}
+                          name="numericValidation.allowDecimals"
+                          render={({ field }) => (
+                            <FormItem className="flex items-center space-x-2">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <FormLabel className="flex items-center">
+                                Allow decimal values
+                                <Tooltip delayDuration={300}>
+                                  <TooltipTrigger asChild>
+                                    <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>If checked, users can enter decimal values (e.g., 10.5).</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+
+                    {/* Range Options Configuration - Moved to Advanced */}
+                    {currentAnswerType === "Range" && (
+                      <div className="space-y-3 pt-2">
+                        <FormLabel className="flex items-center">
+                          Range Options
+                          <Tooltip delayDuration={300}>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Define range options with minimum and maximum values and descriptive labels.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </FormLabel>
+                        {rangeFields.map((item, index) => (
+                          <div key={item.id} className="grid grid-cols-3 gap-2">
+                            <FormField
+                              control={form.control}
+                              name={`rangeOptions.${index}.min`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      placeholder="Min" 
+                                      {...field}
+                                      onChange={e => field.onChange(Number(e.target.value))}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`rangeOptions.${index}.max`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      placeholder="Max" 
+                                      {...field}
+                                      onChange={e => field.onChange(Number(e.target.value))}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`rangeOptions.${index}.label`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input placeholder="Label" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => appendRange({ min: 0, max: 0, label: "" })}
+                          className="mt-2"
+                        >
+                          <PlusCircleIcon className="mr-2 h-4 w-4" /> Add Range
+                        </Button>
+                      </div>
+                    )}
+
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </div>
 
             <DialogFooter className="p-6 pt-8 border-t bg-background">
