@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -15,16 +15,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Sparkles, ArrowRight, Users, Shield, Scale } from "lucide-react";
+import { FileText, Sparkles, ArrowRight, ChevronDown, ChevronUp, Layout, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // Mock templates with better categorization
 const mockTemplates = [
@@ -32,7 +27,6 @@ const mockTemplates = [
     id: "1", 
     name: "Personal Injury Intake",
     description: "Streamline client intake for personal injury cases",
-    icon: <Scale className="h-5 w-5" />,
     category: "Legal",
     popularity: "Popular"
   },
@@ -40,30 +34,19 @@ const mockTemplates = [
     id: "2", 
     name: "Family Law Consultation",
     description: "Initial consultation for family law matters",
-    icon: <Users className="h-5 w-5" />,
     category: "Legal"
   },
   { 
     id: "4", 
     name: "Criminal Defense Initial Contact",
     description: "Essential questions for criminal defense cases",
-    icon: <Shield className="h-5 w-5" />,
     category: "Legal"
   },
   { 
     id: "5", 
     name: "General Legal Consultation",
     description: "Versatile template for various legal consultations",
-    icon: <FileText className="h-5 w-5" />,
     category: "Legal"
-  },
-  { 
-    id: "blank", 
-    name: "Start from Scratch",
-    description: "Build your flow from a blank canvas",
-    icon: <Sparkles className="h-5 w-5" />,
-    category: "Custom",
-    isBlank: true
   },
 ];
 
@@ -78,18 +61,20 @@ interface Step1NameTemplateProps {
 }
 
 export default function Step1NameTemplate({ onSubmit, initialData }: Step1NameTemplateProps) {
+  const [isTemplatesSectionOpen, setIsTemplatesSectionOpen] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("blank");
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       flowName: "",
-      templateId: mockTemplates.find(t => t.isBlank)?.id || "",
+      templateId: "blank",
     },
   });
 
   useEffect(() => {
-    const blankTemplateId = mockTemplates.find(t => t.isBlank)?.id || "";
     let newFlowName = "";
-    let newTemplateId = blankTemplateId;
+    let newTemplateId = "blank";
 
     if (initialData) {
       newFlowName = initialData.flowName || "";
@@ -102,140 +87,191 @@ export default function Step1NameTemplate({ onSubmit, initialData }: Step1NameTe
       flowName: newFlowName,
       templateId: newTemplateId,
     });
+    setSelectedTemplateId(newTemplateId);
   }, [initialData, form]);
 
   function handleSubmit(values: z.infer<typeof formSchema>) {
-    console.log("Step 1 Data:", values);
     onSubmit(values);
   }
 
-  const selectedTemplate = mockTemplates.find(t => t.id === form.watch("templateId"));
+  function handleTemplateSelect(templateId: string) {
+    setSelectedTemplateId(templateId);
+    form.setValue("templateId", templateId);
+    
+    // Auto-suggest flow name based on template
+    if (templateId !== "blank" && !form.getValues("flowName")) {
+      const template = mockTemplates.find(t => t.id === templateId);
+      if (template) {
+        form.setValue("flowName", template.name);
+      }
+    }
+  }
+
+  const selectedTemplate = mockTemplates.find(t => t.id === selectedTemplateId);
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-semibold tracking-tight">Name Your Flow</h2>
-          <p className="text-muted-foreground">
-            Give your intake flow a descriptive name and choose how to get started.
-          </p>
-        </div>
-        
-        <FormField
-          control={form.control}
-          name="flowName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Flow Name</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="e.g., Personal Injury Client Intake" 
-                  {...field} 
-                  className="max-w-md"
-                />
-              </FormControl>
-              <FormDescription>
-                This name will help you identify the flow in your dashboard.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Separator />
-
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Choose a Starting Point</h3>
-            <p className="text-sm text-muted-foreground">
-              Select a template to get started quickly, or build from scratch.
+    <div className="w-full">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+          <div className="space-y-3">
+            <h2 className="text-3xl font-bold tracking-tight">Create New Flow</h2>
+            <p className="text-lg text-muted-foreground">
+              Give your intake flow a name to get started.
             </p>
           </div>
-
+          
           <FormField
             control={form.control}
-            name="templateId"
+            name="flowName"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Template</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="max-w-md">
-                      <SelectValue placeholder="Select a template" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {mockTemplates.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        <div className="flex items-center gap-3">
-                          <div className="p-1 rounded bg-muted">
-                            {template.icon}
-                          </div>
-                          <div className="flex flex-col">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{template.name}</span>
-                              {template.popularity && (
-                                <Badge variant="secondary" className="text-xs">
-                                  {template.popularity}
-                                </Badge>
-                              )}
-                            </div>
-                            <span className="text-xs text-muted-foreground">
-                              {template.description}
-                            </span>
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Choose a template that matches your use case or start from scratch.
+              <FormItem className="space-y-3">
+                <FormLabel className="text-base font-medium">Flow Name</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="e.g., Personal Injury Client Intake" 
+                    {...field} 
+                    className="text-base h-12 max-w-lg"
+                  />
+                </FormControl>
+                <FormDescription className="text-sm">
+                  This name will help you identify the flow in your dashboard.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          {/* Selected template preview */}
-          {selectedTemplate && (
-            <div className="max-w-md p-4 rounded-lg border bg-muted/50">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-background">
-                  {selectedTemplate.icon}
-                </div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium">
-                      {selectedTemplate.name}
-                    </p>
-                    {selectedTemplate.popularity && (
-                      <Badge variant="secondary" className="text-xs">
-                        {selectedTemplate.popularity}
-                      </Badge>
-                    )}
+          {/* Subtle Collapsible Templates Section */}
+          <div className="space-y-4">
+            <Collapsible open={isTemplatesSectionOpen} onOpenChange={setIsTemplatesSectionOpen}>
+              <CollapsibleTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-between h-auto p-4 border border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors max-w-2xl"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-muted">
+                      <Layout className="h-4 w-4" />
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium">Choose a Starting Template</p>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedTemplate && selectedTemplate.id !== "blank" 
+                          ? `Using: ${selectedTemplate.name}`
+                          : "Starting from scratch"
+                        }
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedTemplate.description}
-                  </p>
-                  {selectedTemplate.category && !selectedTemplate.isBlank && (
-                    <Badge variant="outline" className="mt-1 text-xs">
-                      {selectedTemplate.category}
-                    </Badge>
+                  {isTemplatesSectionOpen ? (
+                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   )}
+                </Button>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent className="space-y-4 max-w-2xl">
+                <div className="text-sm text-muted-foreground">
+                  Select a template to get started quickly, or continue with a blank flow.
                 </div>
-              </div>
-            </div>
-          )}
-        </div>
+                
+                {/* Start from Scratch Option */}
+                <Card 
+                  className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+                    selectedTemplateId === "blank" 
+                      ? "ring-2 ring-primary bg-primary/5 shadow-md" 
+                      : "hover:bg-muted/50"
+                  }`}
+                  onClick={() => handleTemplateSelect("blank")}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg">
+                        <Sparkles className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold">Start from Scratch</p>
+                          {selectedTemplateId === "blank" && (
+                            <div className="flex items-center gap-1 text-primary">
+                              <Check className="h-3 w-3" />
+                              <span className="text-xs font-medium">Selected</span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Build your flow from a blank canvas with complete customization
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-        <div className="flex justify-end pt-4">
-          <Button type="submit" className="group">
-            Next: Configure Greeting
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Button>
-        </div>
-      </form>
-    </Form>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or choose a template
+                    </span>
+                  </div>
+                </div>
+
+                {/* Template Options */}
+                <div className="space-y-3">
+                  {mockTemplates.map((template) => (
+                    <Card 
+                      key={template.id}
+                      className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+                        selectedTemplateId === template.id 
+                          ? "ring-2 ring-primary bg-primary/5 shadow-md" 
+                          : "hover:bg-muted/50"
+                      }`}
+                      onClick={() => handleTemplateSelect(template.id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 rounded-lg bg-muted">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium">{template.name}</span>
+                              {template.popularity && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {template.popularity}
+                                </Badge>
+                              )}
+                              {selectedTemplateId === template.id && (
+                                <div className="flex items-center gap-1 text-primary">
+                                  <Check className="h-3 w-3" />
+                                  <span className="text-xs font-medium">Selected</span>
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {template.description}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+
+          <div className="flex justify-end pt-6">
+            <Button type="submit" size="lg" className="group">
+              Next: Configure Greeting
+              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
   );
 } 

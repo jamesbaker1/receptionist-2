@@ -77,24 +77,24 @@ export default function Home() {
               <div className="size-10 rounded-lg bg-gradient-to-br from-primary/10 to-violet-600/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Zap className="size-5 text-primary" />
               </div>
-              <CardTitle className="text-lg">Visual Flow Builder</CardTitle>
+              <CardTitle className="text-lg">Smart Intake Builder</CardTitle>
               <CardDescription className="text-sm">
-                Create complex intake flows with our intuitive drag-and-drop interface.
+                Build complex client intake processes with guided setup and smart logic.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <ul className="space-y-1 text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="size-3 text-primary mt-1 shrink-0" />
-                  <span>Multi-step forms with conditional logic</span>
+                  <span>Step-by-step flow configuration</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="size-3 text-primary mt-1 shrink-0" />
-                  <span>Branching paths & dynamic responses</span>
+                  <span>Conditional routing based on responses</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="size-3 text-primary mt-1 shrink-0" />
-                  <span>Real-time preview & testing</span>
+                  <span>Professional templates & flow testing</span>
                 </li>
               </ul>
             </CardContent>

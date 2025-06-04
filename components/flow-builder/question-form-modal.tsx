@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription
 } from "@/components/ui/dialog";
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage
@@ -68,25 +68,6 @@ export const questionSchema = z.object({
   // Advanced fields
   adminNotes: z.string().optional(),
   customId: z.string().optional(),
-}).refine(data => {
-  if (data.answerType === "Radio") {
-    return data.radioOptions && data.radioOptions.length >= 2;
-  }
-  if (data.answerType === "Range") {
-    return data.rangeOptions && data.rangeOptions.length >= 2;
-  }
-  if (data.answerType === "MultiSelect") {
-    return data.multiSelectOptions && data.multiSelectOptions.length >= 2;
-  }
-  if (data.answerType === "Numeric") {
-    if (data.numericValidation?.min !== undefined && data.numericValidation?.max !== undefined) {
-      return data.numericValidation.min < data.numericValidation.max;
-    }
-  }
-  return true;
-}, { 
-  message: "Please check the validation rules for your question type.",
-  path: ["answerType"]
 });
 
 export type QuestionFormValues = z.infer<typeof questionSchema>;
@@ -106,7 +87,9 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
       id: initialData?.id || `q_${Date.now()}`,
       questionText: initialData?.questionText || "",
       answerType: initialData?.answerType || "Text",
-      radioOptions: initialData?.radioOptions || [{ value: "" }, { value: "" }],
+      radioOptions: initialData?.answerType === "Radio" 
+        ? (initialData?.radioOptions && initialData.radioOptions.length >= 2 ? initialData.radioOptions : [{value: ""}, {value:""}]) 
+        : [],
       numericValidation: initialData?.numericValidation || { allowDecimals: false },
       rangeOptions: initialData?.rangeOptions || [
         { min: 0, max: 25000, label: "Under $25,000" },
@@ -114,7 +97,9 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
         { min: 50000, max: 100000, label: "$50,000 - $100,000" },
         { min: 100000, max: Infinity, label: "Over $100,000" }
       ],
-      multiSelectOptions: initialData?.multiSelectOptions || [{ value: "", label: "" }],
+      multiSelectOptions: initialData?.answerType === "MultiSelect"
+        ? (initialData?.multiSelectOptions && initialData.multiSelectOptions.length >= 2 ? initialData.multiSelectOptions : [{ value: "", label: "" }, { value: "", label: "" }])
+        : [],
       adminNotes: initialData?.adminNotes || "",
       customId: initialData?.customId || "",
     },
@@ -153,21 +138,69 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
         { min: 50000, max: 100000, label: "$50,000 - $100,000" },
         { min: 100000, max: Infinity, label: "Over $100,000" }
       ],
-      multiSelectOptions: initialData?.multiSelectOptions || [{ value: "", label: "" }],
+      multiSelectOptions: initialData?.answerType === "MultiSelect"
+        ? (initialData?.multiSelectOptions && initialData.multiSelectOptions.length >= 2 ? initialData.multiSelectOptions : [{ value: "", label: "" }, { value: "", label: "" }])
+        : [],
       adminNotes: initialData?.adminNotes || "",
       customId: initialData?.customId || "",
     });
   }, [initialData, form.reset, form]);
 
+  React.useEffect(() => {
+    // Ensure minimum fields for Radio questions
+    if (currentAnswerType === "Radio" && radioFields.length < 2) {
+      const fieldsToAdd = 2 - radioFields.length;
+      for (let i = 0; i < fieldsToAdd; i++) {
+        appendRadio({ value: "" });
+      }
+    }
+    
+    // Ensure minimum fields for MultiSelect questions
+    if (currentAnswerType === "MultiSelect" && multiSelectFields.length < 2) {
+      const fieldsToAdd = 2 - multiSelectFields.length;
+      for (let i = 0; i < fieldsToAdd; i++) {
+        appendMultiSelect({ value: "", label: "" });
+      }
+    }
+  }, [currentAnswerType, radioFields.length, multiSelectFields.length, appendRadio, appendMultiSelect]);
+
   const handleSubmit = (values: QuestionFormValues) => {
-    const dataToSubmit = {
+    console.log("=== QUESTION FORM SUBMISSION DEBUG ===");
+    console.log("Form values:", values);
+    console.log("Form errors:", form.formState.errors);
+    console.log("Is form valid:", form.formState.isValid);
+    console.log("Form isDirty:", form.formState.isDirty);
+    console.log("Form isSubmitting:", form.formState.isSubmitting);
+    console.log("RadioFields length:", radioFields.length);
+    console.log("RadioFields data:", radioFields);
+    console.log("MultiSelectFields length:", multiSelectFields.length);
+    console.log("MultiSelectFields data:", multiSelectFields);
+    
+    // Clean up empty options before processing
+    const cleanedValues = {
       ...values,
-      id: values.customId || values.id, // Use custom ID if provided, otherwise use auto-generated
-      radioOptions: values.answerType === "Radio" ? values.radioOptions : undefined,
-      rangeOptions: values.answerType === "Range" ? values.rangeOptions : undefined,
-      multiSelectOptions: values.answerType === "MultiSelect" ? values.multiSelectOptions : undefined,
-      numericValidation: values.answerType === "Numeric" ? values.numericValidation : undefined,
+      radioOptions: values.answerType === "Radio" 
+        ? values.radioOptions?.filter(opt => opt.value.trim() !== '') 
+        : undefined,
+      multiSelectOptions: values.answerType === "MultiSelect" 
+        ? values.multiSelectOptions?.filter(opt => opt.value.trim() !== '' && opt.label.trim() !== '') 
+        : undefined,
     };
+    
+    console.log("Cleaned values:", cleanedValues);
+    
+    const dataToSubmit = {
+      ...cleanedValues,
+      id: cleanedValues.customId || cleanedValues.id, // Use custom ID if provided, otherwise use auto-generated
+      radioOptions: cleanedValues.answerType === "Radio" ? cleanedValues.radioOptions : undefined,
+      rangeOptions: cleanedValues.answerType === "Range" ? cleanedValues.rangeOptions : undefined,
+      multiSelectOptions: cleanedValues.answerType === "MultiSelect" ? cleanedValues.multiSelectOptions : undefined,
+      numericValidation: cleanedValues.answerType === "Numeric" ? cleanedValues.numericValidation : undefined,
+    };
+    
+    console.log("Data to submit:", dataToSubmit);
+    console.log("=== END DEBUG ===");
+    
     onSubmit(dataToSubmit);
     onOpenChange(false);
     form.reset();
@@ -178,16 +211,19 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
       if (!open) form.reset(); 
       onOpenChange(open); 
     }}>
-      <DialogContent className="sm:max-w-md md:max-w-lg lg:max-w-xl p-0 flex flex-col max-h-[90vh]">
+      <DialogContent className="sm:max-w-md md:max-w-lg lg:max-w-2xl p-0 flex flex-col max-h-[85vh]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col h-full">
-            <DialogHeader className="p-6 pb-4">
+            <DialogHeader className="p-6 pb-4 flex-shrink-0">
               <DialogTitle className="text-2xl">
                 {initialData?.id ? "Edit Question" : "Add New Question"}
               </DialogTitle>
+              <DialogDescription>
+                Configure the question text, answer type, and any additional settings.
+              </DialogDescription>
             </DialogHeader>
             
-            <div className="px-6 space-y-4 flex-1 overflow-y-auto pb-8">
+            <div className="px-6 space-y-4 flex-1 overflow-y-auto min-h-0">
               {/* Primary Fields - Always Visible */}
               <FormField
                 control={form.control}
@@ -203,36 +239,7 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="answerType"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>Answer Type</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="grid grid-cols-1 sm:grid-cols-3 gap-3"
-                      >
-                        {answerTypes.map(type => (
-                          <FormItem key={type} className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value={type} id={`type-${type}`} />
-                            </FormControl>
-                            <FormLabel htmlFor={`type-${type}`} className="font-normal cursor-pointer">
-                              {type}
-                            </FormLabel>
-                          </FormItem>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Conditional Fields Based on Answer Type - Basic Configuration */}
+              {/* Conditional Fields Based on Answer Type - Show based on current selection */}
               {currentAnswerType === "Radio" && (
                 <div className="space-y-3 pt-2">
                   <FormLabel>Radio Options</FormLabel>
@@ -275,27 +282,40 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
                 <div className="space-y-3 pt-2">
                   <FormLabel>Multi-select Options</FormLabel>
                   {multiSelectFields.map((item, index) => (
-                    <FormField
-                      key={item.id}
-                      control={form.control}
-                      name={`multiSelectOptions.${index}.value`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex items-center gap-2">
+                    <div key={item.id} className="grid grid-cols-2 gap-2">
+                      <FormField
+                        control={form.control}
+                        name={`multiSelectOptions.${index}.value`}
+                        render={({ field }) => (
+                          <FormItem>
                             <FormControl>
-                              <Input placeholder={`Option ${index + 1}`} {...field} />
+                              <Input placeholder={`Value ${index + 1}`} {...field} />
                             </FormControl>
-                            {multiSelectFields.length > 2 && (
-                              <Button type="button" variant="ghost" size="icon" onClick={() => removeMultiSelect(index)} className="text-destructive hover:text-destructive">
-                                <Trash2Icon className="h-4 w-4" />
-                                <span className="sr-only">Remove option</span>
-                              </Button>
-                            )}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`multiSelectOptions.${index}.label`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center gap-2">
+                              <FormControl>
+                                <Input placeholder={`Label ${index + 1}`} {...field} />
+                              </FormControl>
+                              {multiSelectFields.length > 2 && (
+                                <Button type="button" variant="ghost" size="icon" onClick={() => removeMultiSelect(index)} className="text-destructive hover:text-destructive">
+                                  <Trash2Icon className="h-4 w-4" />
+                                  <span className="sr-only">Remove option</span>
+                                </Button>
+                              )}
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   ))}
                   <Button
                     type="button"
@@ -314,6 +334,46 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
                 <AccordionItem value="advanced-settings">
                   <AccordionTrigger>Advanced Settings</AccordionTrigger>
                   <AccordionContent className="space-y-4">
+                    
+                    {/* Answer Type - Moved to Advanced */}
+                    <FormField
+                      control={form.control}
+                      name="answerType"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormLabel className="flex items-center">
+                            Answer Type
+                            <Tooltip delayDuration={300}>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>The AI will automatically detect the answer type, but you can override it here if needed.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="flex flex-wrap gap-4"
+                            >
+                              {answerTypes.map(type => (
+                                <FormItem key={type} className="flex items-center space-x-2 space-y-0">
+                                  <FormControl>
+                                    <RadioGroupItem value={type} id={`type-${type}`} />
+                                  </FormControl>
+                                  <FormLabel htmlFor={`type-${type}`} className="font-normal cursor-pointer text-sm">
+                                    {type}
+                                  </FormLabel>
+                                </FormItem>
+                              ))}
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     
                     {/* Custom ID Field */}
                     <FormField
@@ -523,13 +583,21 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+              
+              {/* Add some bottom padding to ensure footer doesn't overlap content */}
+              <div className="pb-4"></div>
             </div>
 
-            <DialogFooter className="p-6 pt-8 border-t bg-background">
+            <DialogFooter className="p-6 pt-4 border-t bg-background flex-shrink-0">
               <DialogClose asChild>
                 <Button type="button" variant="outline" onClick={() => { form.reset(); onOpenChange(false); }}>Cancel</Button>
               </DialogClose>
-              <Button type="submit">Save Question</Button>
+              <Button type="submit" onClick={() => {
+                console.log("Save button clicked!");
+                console.log("Form is valid:", form.formState.isValid);
+                console.log("Form errors:", form.formState.errors);
+                console.log("Current form values:", form.getValues());
+              }}>Save Question</Button>
             </DialogFooter>
           </form>
         </Form>

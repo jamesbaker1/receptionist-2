@@ -29,12 +29,26 @@ export default function Step2Questions({ onSubmit, initialData, onBack }: Step2Q
   }, [initialData?.questions, questions]);
 
   const handleAddQuestion = (data: QuestionFormValues) => {
+    console.log("=== HANDLE ADD QUESTION DEBUG ===");
+    console.log("Received data:", data);
+    console.log("Current editing question:", editingQuestion);
+    console.log("Current questions before update:", questions);
+    
     if (editingQuestion && editingQuestion.id) {
+      console.log("Updating existing question with ID:", editingQuestion.id);
       setQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...data, id: editingQuestion.id } : q));
     } else {
-      setQuestions(prev => [...prev, { ...data, id: data.id || `q_${Date.now()}_${prev.length}` }]);
+      console.log("Adding new question");
+      const newQuestion = { ...data, id: data.id || `q_${Date.now()}_${questions.length}` };
+      console.log("New question to add:", newQuestion);
+      setQuestions(prev => {
+        const updated = [...prev, newQuestion];
+        console.log("Updated questions array:", updated);
+        return updated;
+      });
     }
     setEditingQuestion(undefined);
+    console.log("=== END HANDLE ADD QUESTION DEBUG ===");
   };
 
   const openEditModal = (question: QuestionFormValues) => {
@@ -84,6 +98,16 @@ export default function Step2Questions({ onSubmit, initialData, onBack }: Step2Q
         </Button>
       </div>
 
+      {/* Debug info */}
+      <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
+        <div>Questions count: {questions.length}</div>
+        {questions.length > 0 && (
+          <pre className="mt-2 text-xs overflow-auto max-h-32">
+            {JSON.stringify(questions, null, 2)}
+          </pre>
+        )}
+      </div>
+
       {questions.length === 0 ? (
         <div className="text-center py-10 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
           <ListChecksIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
@@ -107,6 +131,13 @@ export default function Step2Questions({ onSubmit, initialData, onBack }: Step2Q
                     <div className="mt-2 space-y-1 pl-2 text-xs text-gray-600 dark:text-gray-400">
                       {q.radioOptions.map((opt, optIndex) => (
                         <p key={optIndex} className="break-words">- {opt.value}</p>
+                      ))}
+                    </div>
+                  )}
+                  {q.answerType === "MultiSelect" && q.multiSelectOptions && q.multiSelectOptions.length > 0 && (
+                    <div className="mt-2 space-y-1 pl-2 text-xs text-gray-600 dark:text-gray-400">
+                      {q.multiSelectOptions.map((opt, optIndex) => (
+                        <p key={optIndex} className="break-words">- {opt.label || opt.value}</p>
                       ))}
                     </div>
                   )}

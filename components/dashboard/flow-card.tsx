@@ -2,7 +2,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Edit, Copy, Trash2, BarChart3, Clock } from "lucide-react";
+import { MoreVertical, Edit, Copy, Trash2, BarChart3, Clock, Phone } from "lucide-react";
 import Link from "next/link";
 
 export type FlowStatus = "Draft" | "Published";
@@ -13,9 +13,10 @@ interface FlowCardProps {
   lastEdited: string;
   status: FlowStatus;
   responses?: number;
+  phoneNumber?: string;
 }
 
-export default function FlowCard({ id, title, lastEdited, status, responses }: FlowCardProps) {
+export default function FlowCard({ id, title, lastEdited, status, responses, phoneNumber }: FlowCardProps) {
   // Format the date to be more readable
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -69,14 +70,21 @@ export default function FlowCard({ id, title, lastEdited, status, responses }: F
         </div>
       </CardHeader>
       
-      <CardContent className="flex-grow pb-3">
+      <CardContent className="flex-grow pb-3 space-y-2">
+        {phoneNumber && (
+          <div className="flex items-center gap-1 text-sm text-foreground font-medium">
+            <Phone className="h-3 w-3 text-primary" />
+            <span>{phoneNumber}</span>
+          </div>
+        )}
+        
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <Clock className="h-3 w-3" />
           <span>{formatDate(lastEdited)}</span>
         </div>
         
         {status === "Published" && responses !== undefined && (
-          <div className="flex items-center gap-1 text-sm text-muted-foreground mt-2">
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <BarChart3 className="h-3 w-3" />
             <span>{responses} responses</span>
           </div>
