@@ -5,13 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BriefcaseIcon, CalendarDaysIcon, InboxIcon, MailIcon, PhoneCallIcon, Settings2Icon, HelpCircle } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { BriefcaseIcon, CalendarDaysIcon, InboxIcon, MailIcon, PhoneCallIcon, CheckCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { useSession, signIn } from 'next-auth/react';
 
 interface ToolsConfig {
   [key: string]: {
@@ -39,6 +38,10 @@ interface Tool {
     emailTemplate?: string;
     webhookUrl?: string;
     priority?: 'low' | 'medium' | 'high';
+    syncContacts?: boolean;
+    createMatters?: boolean;
+    createTasks?: boolean;
+    assignToUser?: string;
   };
 }
 
@@ -46,10 +49,16 @@ const mockTools: Tool[] = [
   {
     id: 'clio',
     name: 'Clio Integration',
-    description: 'Connect to Clio to manage contacts and matters.',
+    description: 'Automatically sync intake data with your Clio account.',
     icon: BriefcaseIcon,
     enabled: false,
     category: 'crm',
+    config: {
+      syncContacts: true,
+      createMatters: false,
+      createTasks: true,
+      assignToUser: '',
+    }
   },
   {
     id: 'litify',
@@ -102,6 +111,7 @@ const toolCategories = {
 };
 
 export default function Step4ToolCalls({ onSubmit, onBack }: Step4ToolCallsProps) {
+  const { data: session } = useSession()
   const [tools, setTools] = React.useState<Tool[]>(mockTools);
   const [viewMode, setViewMode] = React.useState<'simple' | 'grouped'>('simple');
 
@@ -136,6 +146,61 @@ export default function Step4ToolCalls({ onSubmit, onBack }: Step4ToolCallsProps
 
   const enabledToolsCount = tools.filter(tool => tool.enabled).length;
 
+  // Add Clio-specific configuration UI
+  const renderClioConfig = (tool: Tool) => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 text-green-600 mb-4">
+        <CheckCircle className="h-4 w-4" />
+        <span className="text-sm">Connected to Clio as {session?.user?.name}</span>
+        <span className="text-xs text-muted-foreground">({session?.user?.firmName})</span>
+      </div>
+      
+      <div className="space-y-3">
+        <Label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={tool.config?.syncContacts || false}
+            onChange={(e) => handleConfigChange(tool.id, { syncContacts: e.target.checked })}
+            className="rounded"
+          />
+          <span>Create contacts in Clio for new callers</span>
+        </Label>
+        
+        <Label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={tool.config?.createMatters || false}
+            onChange={(e) => handleConfigChange(tool.id, { createMatters: e.target.checked })}
+            className="rounded"
+          />
+          <span>Create new matters for qualified leads</span>
+        </Label>
+        
+        <Label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={tool.config?.createTasks || false}
+            onChange={(e) => handleConfigChange(tool.id, { createTasks: e.target.checked })}
+            className="rounded"
+          />
+          <span>Create follow-up tasks</span>
+        </Label>
+
+        {tool.config?.createTasks && (
+          <div className="ml-6 space-y-2">
+            <Label htmlFor="assign-to-user">Assign tasks to</Label>
+            <Input
+              id="assign-to-user"
+              placeholder="Enter Clio user ID or leave blank for caller"
+              value={tool.config?.assignToUser || ''}
+              onChange={(e) => handleConfigChange(tool.id, { assignToUser: e.target.value })}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
   const renderToolCard = (tool: Tool) => (
     <div key={tool.id} className="space-y-4">
       <div className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 dark:bg-gray-800/30">
@@ -153,11 +218,24 @@ export default function Step4ToolCalls({ onSubmit, onBack }: Step4ToolCallsProps
           checked={tool.enabled}
           onCheckedChange={() => handleToolToggle(tool.id)}
           aria-label={`Toggle ${tool.name}`}
+          disabled={tool.id === 'clio' && !session} // Disable if not authenticated
         />
       </div>
       
       {tool.enabled && (
         <div className="ml-12 p-4 border rounded-lg bg-gray-50 dark:bg-gray-800/30 space-y-4">
+          {tool.id === 'clio' && session && renderClioConfig(tool)}
+          {tool.id === 'clio' && !session && (
+            <div className="text-center py-4">
+              <p className="text-sm text-muted-foreground mb-3">
+                Sign in with Clio to configure this integration
+              </p>
+              <Button onClick={() => signIn("clio")} size="sm">
+                Connect Clio Account
+              </Button>
+            </div>
+          )}
+
           {/* Basic Configuration */}
           {tool.id === 'hot-transfer' && (
             <>
@@ -199,71 +277,26 @@ export default function Step4ToolCalls({ onSubmit, onBack }: Step4ToolCallsProps
                 placeholder="Enter email template content..."
                 value={tool.config?.emailTemplate || ''}
                 onChange={(e) => handleConfigChange(tool.id, { emailTemplate: e.target.value })}
-                rows={3}
               />
             </div>
           )}
 
-          {/* Advanced Settings */}
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="advanced-settings">
-              <AccordionTrigger className="text-sm">
-                <div className="flex items-center">
-                  <Settings2Icon className="h-4 w-4 mr-2" />
-                  Advanced Settings
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="space-y-4 pt-2">
-                {/* Priority Setting */}
-                <div className="space-y-2">
-                  <Label className="flex items-center">
-                    Priority Level
-                    <TooltipProvider>
-                      <Tooltip delayDuration={300}>
-                        <TooltipTrigger asChild>
-                          <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Higher priority tools will execute first when multiple tools are triggered.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </Label>
-                  <select
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={tool.config?.priority || 'medium'}
-                    onChange={(e) => handleConfigChange(tool.id, { priority: e.target.value as 'low' | 'medium' | 'high' })}
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
-                </div>
-
-                {/* Webhook URL for advanced integrations */}
-                <div className="space-y-2">
-                  <Label className="flex items-center">
-                    Webhook URL (Optional)
-                    <TooltipProvider>
-                      <Tooltip delayDuration={300}>
-                        <TooltipTrigger asChild>
-                          <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Custom webhook endpoint for additional integrations or notifications.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </Label>
-                  <Input
-                    placeholder="https://your-webhook-endpoint.com"
-                    value={tool.config?.webhookUrl || ''}
-                    onChange={(e) => handleConfigChange(tool.id, { webhookUrl: e.target.value })}
-                  />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          {/* Priority Setting for Communication Tools */}
+          {(tool.id === 'email' || tool.id === 'hot-transfer') && (
+            <div className="space-y-2">
+              <Label htmlFor="priority">Priority</Label>
+              <select
+                id="priority"
+                className="w-full p-2 border rounded-md"
+                value={tool.config?.priority || 'medium'}
+                onChange={(e) => handleConfigChange(tool.id, { priority: e.target.value as 'low' | 'medium' | 'high' })}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+          )}
         </div>
       )}
     </div>

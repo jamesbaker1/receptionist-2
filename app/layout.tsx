@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import MainLayout from "@/components/layout/main-layout";
 import { ThemeProvider } from "next-themes";
+import ClientSessionProvider from "@/components/providers/session-provider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -10,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Lua - Intelligent Flow Builder",
+  title: "Lua - AI Voice Intake Assistant",
   description: "Build intelligent intake flows and automate client communication with our powerful flow builder platform.",
 };
 
@@ -25,14 +26,16 @@ export default function RootLayout({
         className={`${inter.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <MainLayout>{children}</MainLayout>
-        </ThemeProvider>
+        <ClientSessionProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <MainLayout>{children}</MainLayout>
+          </ThemeProvider>
+        </ClientSessionProvider>
       </body>
     </html>
   );

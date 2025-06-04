@@ -1,12 +1,15 @@
 "use client";
 
+import { useAuthGuard } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Search, Filter, Plus, Sparkles, FileText } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { Search, Filter, Plus, Sparkles, FileText, LogOut, Settings, User } from "lucide-react";
 import FlowCard, { type FlowStatus } from "@/components/dashboard/flow-card";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { signOut } from "next-auth/react"
 import { useState } from "react";
 
 // Mock data for flows - replace with actual data later
@@ -79,8 +82,24 @@ const mockFlows: {
 // const mockFlows: any[] = []; // Test empty state
 
 export default function DashboardPage() {
+  const { session, isLoading } = useAuthGuard()
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!session) {
+    return null // Will redirect via useAuthGuard
+  }
 
   // Filter flows based on current filters
   const filteredFlows = mockFlows.filter(flow => {
@@ -96,21 +115,64 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 p-6">
-      {/* Header */}
+      {/* Header with user info */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Intake Flows</h1>
-            <p className="text-muted-foreground mt-1">
-              Create and manage your automated intake workflows
-            </p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Welcome back, {session.user?.name?.split(' ')[0]}</h1>
+              <p className="text-muted-foreground mt-1">
+                {session.user?.firmName ? `${session.user.firmName} • Clio Account` : "Clio Account"}
+              </p>
+            </div>
           </div>
-          <Link href="/flows/new">
-            <Button className="gap-2">
-              <Plus className="size-4" />
-              New Flow
-            </Button>
-          </Link>
+          
+          <div className="flex items-center gap-4">
+            <Link href="/flows/new">
+              <Button className="gap-2">
+                <Plus className="size-4" />
+                New Flow
+              </Button>
+            </Link>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-10 w-10 rounded-full">
+                  <Avatar>
+                    <AvatarImage src={session.user?.image || undefined} />
+                    <AvatarFallback>
+                      {session.user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium">{session.user?.name}</p>
+                    <p className="text-xs text-muted-foreground">{session.user?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="text-red-600"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Stats */}
