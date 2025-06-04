@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PlusCircleIcon, Trash2Icon, Edit2Icon, ArrowRightIcon, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { type QuestionFormValues } from "./question-form-modal"; // Assuming this path is correct
@@ -140,7 +139,7 @@ export default function Step3ConditionalLogic({
                   <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Create simple "if-then" rules quickly. For complex rules with multiple conditions, use Advanced mode.</p>
+                  <p>Create simple &quot;if-then&quot; rules quickly. For complex rules with multiple conditions, use Advanced mode.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

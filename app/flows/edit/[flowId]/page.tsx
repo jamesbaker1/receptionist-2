@@ -85,7 +85,7 @@ const EditFlowPage = () => {
     }
 
     return (
-        <MainLayout breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: flowData.name, href: `/flows/edit/${flowId}` }, { label: "Edit" }]}>
+        <MainLayout>
             <div className="flex flex-col h-[calc(100vh-var(--header-height)-var(--breadcrumb-height)-2rem)]">
                 {/* Toolbar */}
                 <div className="flex justify-end items-center p-4 border-b bg-background">
