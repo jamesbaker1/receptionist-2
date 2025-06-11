@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { PlusCircleIcon, Trash2Icon, Edit2Icon, ArrowRightIcon, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { type QuestionFormValues } from "./question-form-modal"; // Assuming this path is correct
@@ -43,6 +45,7 @@ export default function Step3ConditionalLogic({
   onBack,
 }: Step3ConditionalLogicProps) {
   const [logicRules, setLogicRules] = useState<LogicRule[]>(initialData?.logicRules || []);
+  const [isRuleModalOpen, setIsRuleModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<LogicRule | null>(null);
   const [currentRule, setCurrentRule] = useState<Partial<LogicRule>>({ 
     id: nanoid(5),
@@ -70,11 +73,21 @@ export default function Step3ConditionalLogic({
       return [...prev, rule];
     });
     setEditingRule(null);
+    setIsRuleModalOpen(false);
   };
 
-  const startEditRule = (rule: LogicRule) => {
+  const openEditRuleModal = (rule: LogicRule) => {
     setEditingRule(rule);
-    // TODO: Open modal/form here, prefilled with rule data
+    setIsRuleModalOpen(true);
+  };
+
+  const openNewRuleModal = () => {
+    setEditingRule(null);
+    setCurrentRule({ 
+      id: nanoid(5),
+      conditions: [{ type: 'EQUALS', value: '', operator: 'AND' }]
+    });
+    setIsRuleModalOpen(true);
   };
 
   const deleteRule = (ruleId: string) => {
@@ -116,11 +129,6 @@ export default function Step3ConditionalLogic({
       } as LogicRule;
 
       handleAddOrUpdateRule(ruleToSave);
-      setCurrentRule({ 
-        id: nanoid(5),
-        conditions: [{ type: 'EQUALS', value: '', operator: 'AND' }]
-      });
-      setEditingRule(null);
     };
 
     const availableTargetQuestions = [
@@ -129,134 +137,114 @@ export default function Step3ConditionalLogic({
     ];
 
     return (
-      <Card className="mt-6 mb-6 p-0">
-        <CardHeader className="p-4 border-b">
-          <CardTitle className="text-lg flex items-center">
-            Quick Rule Builder
-            <TooltipProvider>
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Create simple &quot;if-then&quot; rules quickly. For complex rules with multiple conditions, use Advanced mode.</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Source Question */}
-            <div className="space-y-2">
-              <Label>When client answers</Label>
-              <Select
-                value={currentRule.sourceQuestionId}
-                onValueChange={(val: string) => setCurrentRule({ 
-                  ...currentRule, 
-                  sourceQuestionId: val, 
-                  conditions: [{ type: 'EQUALS', value: '', operator: 'AND' }] 
-                })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select question..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {questions.map(q => <SelectItem key={q.id} value={q.id!}>{q.questionText}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Condition & Value */}
-            <div className="space-y-2">
-              <Label>Is</Label>
-              <div className="flex gap-2">
-                <Select
-                  value={condition?.type || 'EQUALS'}
-                  onValueChange={(val: LogicRule['conditions'][0]['type']) => {
-                    const newConditions = [{ 
-                      ...condition, 
-                      type: val,
-                      value: condition?.value || '',
-                      operator: condition?.operator || 'AND'
-                    }];
-                    setCurrentRule(prev => ({ ...prev, conditions: newConditions }));
-                  }}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="EQUALS">Equals</SelectItem>
-                    <SelectItem value="NOT_EQUALS">Not Equals</SelectItem>
-                    <SelectItem value="GREATER_THAN">Greater Than</SelectItem>
-                    <SelectItem value="LESS_THAN">Less Than</SelectItem>
-                    <SelectItem value="CONTAINS">Contains</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  className="flex-1"
-                  type={sourceQuestion?.answerType === 'Numeric' ? 'number' : 'text'}
-                  placeholder="Value"
-                  value={condition?.value as string || ''}
-                  onChange={e => {
-                    const newConditions = [{
-                      type: condition?.type || 'EQUALS',
-                      value: sourceQuestion?.answerType === 'Numeric' ? Number(e.target.value) : e.target.value,
-                      operator: condition?.operator || 'AND'
-                    }];
-                    setCurrentRule(prev => ({ ...prev, conditions: newConditions }));
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Target Question */}
-            <div className="space-y-2">
-              <Label>Then go to</Label>
-              <Select
-                value={currentRule.targetQuestionId}
-                onValueChange={(val: string) => setCurrentRule({ ...currentRule, targetQuestionId: val })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select next question..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableTargetQuestions.map(q => (
-                    <SelectItem key={q.id} value={q.id!}>
-                      {q.questionText.length > 40 ? `${q.questionText.substring(0, 40)}...` : q.questionText}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Source Question */}
+          <div className="space-y-2">
+            <Label>When client answers</Label>
+            <Select
+              value={currentRule.sourceQuestionId}
+              onValueChange={(val: string) => setCurrentRule({ 
+                ...currentRule, 
+                sourceQuestionId: val, 
+                conditions: [{ type: 'EQUALS', value: '', operator: 'AND' }] 
+              })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select question..." />
+              </SelectTrigger>
+              <SelectContent>
+                {questions.map(q => <SelectItem key={q.id} value={q.id!}>{q.questionText}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
-          
-          {/* Default Rule Checkbox */}
-          {currentRule.sourceQuestionId && (
-            <div className="flex items-center space-x-2 pt-2">
-              <Checkbox 
-                id={`default-rule-${currentRule.id}`} 
-                checked={currentRule.isDefault || false}
-                onCheckedChange={(checked) => setCurrentRule(prev => ({...prev, isDefault: !!checked}))}
+
+          {/* Condition & Value */}
+          <div className="space-y-2">
+            <Label>Is</Label>
+            <div className="flex gap-2">
+              <Select
+                value={condition?.type || 'EQUALS'}
+                onValueChange={(val: LogicRule['conditions'][0]['type']) => {
+                  const newConditions = [{ 
+                    ...condition, 
+                    type: val,
+                    value: condition?.value || '',
+                    operator: condition?.operator || 'AND'
+                  }];
+                  setCurrentRule(prev => ({ ...prev, conditions: newConditions }));
+                }}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="EQUALS">Equals</SelectItem>
+                  <SelectItem value="NOT_EQUALS">Not Equals</SelectItem>
+                  <SelectItem value="GREATER_THAN">Greater Than</SelectItem>
+                  <SelectItem value="LESS_THAN">Less Than</SelectItem>
+                  <SelectItem value="CONTAINS">Contains</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                className="flex-1"
+                type={sourceQuestion?.answerType === 'Numeric' ? 'number' : 'text'}
+                placeholder="Value"
+                value={condition?.value as string || ''}
+                onChange={e => {
+                  const newConditions = [{
+                    type: condition?.type || 'EQUALS',
+                    value: sourceQuestion?.answerType === 'Numeric' ? Number(e.target.value) : e.target.value,
+                    operator: condition?.operator || 'AND'
+                  }];
+                  setCurrentRule(prev => ({ ...prev, conditions: newConditions }));
+                }}
               />
-              <Label htmlFor={`default-rule-${currentRule.id}`} className="text-sm font-normal">
-                Make this the default path if no other conditions are met
-              </Label>
             </div>
-          )}
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="ghost" onClick={() => { 
-              setEditingRule(null); 
-              setCurrentRule({ id: nanoid(5), conditions: [{ type: 'EQUALS', value: '', operator: 'AND' }] }); 
-            }}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave}>{editingRule ? "Update Rule" : "Save Rule"}</Button>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Target Question */}
+          <div className="space-y-2">
+            <Label>Then go to</Label>
+            <Select
+              value={currentRule.targetQuestionId}
+              onValueChange={(val: string) => setCurrentRule({ ...currentRule, targetQuestionId: val })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select next question..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableTargetQuestions.map(q => (
+                  <SelectItem key={q.id} value={q.id!}>
+                    {q.questionText.length > 40 ? `${q.questionText.substring(0, 40)}...` : q.questionText}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        
+        {/* Default Rule Checkbox */}
+        {currentRule.sourceQuestionId && (
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox 
+              id={`default-rule-${currentRule.id}`} 
+              checked={currentRule.isDefault || false}
+              onCheckedChange={(checked) => setCurrentRule(prev => ({...prev, isDefault: !!checked}))}
+            />
+            <Label htmlFor={`default-rule-${currentRule.id}`} className="text-sm font-normal">
+              Make this the default path if no other conditions are met
+            </Label>
+          </div>
+        )}
+
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button variant="ghost" onClick={() => setIsRuleModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave}>{editingRule ? "Update Rule" : "Save Rule"}</Button>
+        </div>
+      </div>
     );
   };
 
@@ -278,11 +266,6 @@ export default function Step3ConditionalLogic({
       }
 
       handleAddOrUpdateRule(currentRule as LogicRule);
-      setCurrentRule({ 
-        id: nanoid(5),
-        conditions: [{ type: 'EQUALS', value: '', operator: 'AND' }]
-      });
-      setEditingRule(null);
     };
 
     const addCondition = () => {
@@ -308,270 +291,299 @@ export default function Step3ConditionalLogic({
     ];
 
     return (
-      <Card className="mt-6 mb-6 p-0">
-        <CardHeader className="p-4 border-b">
-          <CardTitle className="text-lg flex items-center">
-            Advanced Rule Builder
+      <div className="space-y-4">
+        {/* Source Question */}
+        <div className="space-y-1">
+          <Label>When client answers</Label>
+          <Select
+            value={currentRule.sourceQuestionId}
+            onValueChange={(val: string) => setCurrentRule({ ...currentRule, sourceQuestionId: val, conditions: [{ type: 'EQUALS', value: '', operator: 'AND' }] })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select question..." />
+            </SelectTrigger>
+            <SelectContent>
+              {questions.map(q => <SelectItem key={q.id} value={q.id!}>{q.questionText}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Conditions */}
+        <div className="space-y-3">
+          <Label className="flex items-center">
+            Conditions
             <TooltipProvider>
               <Tooltip delayDuration={300}>
                 <TooltipTrigger asChild>
-                  <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground cursor-help" />
+                  <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Create complex rules with multiple conditions, ranges, and AND/OR logic.</p>
+                  <p>Add multiple conditions with AND/OR logic for complex rules.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 space-y-4">
-          <div className="space-y-4">
-            {/* Source Question */}
-            <div className="space-y-1">
-              <Label>When client answers</Label>
+          </Label>
+          {currentRule.conditions?.map((condition, index) => (
+            <div key={index} className="grid grid-cols-4 gap-2 items-start">
+              {index > 0 && (
+                <Select
+                  value={condition.operator}
+                  onValueChange={(val: 'AND' | 'OR') => {
+                    const newConditions = [...(currentRule.conditions || [])];
+                    newConditions[index] = { ...condition, operator: val };
+                    setCurrentRule(prev => ({ ...prev, conditions: newConditions }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="AND/OR" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="AND">AND</SelectItem>
+                    <SelectItem value="OR">OR</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+              {index === 0 && <div></div>}
               <Select
-                value={currentRule.sourceQuestionId}
-                onValueChange={(val: string) => setCurrentRule({ ...currentRule, sourceQuestionId: val, conditions: [{ type: 'EQUALS', value: '', operator: 'AND' }] })}
+                value={condition.type}
+                onValueChange={(val: LogicRule['conditions'][0]['type']) => {
+                  const newConditions = [...(currentRule.conditions || [])];
+                  newConditions[index] = { ...condition, type: val };
+                  setCurrentRule(prev => ({ ...prev, conditions: newConditions }));
+                }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select question..." />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {questions.map(q => <SelectItem key={q.id} value={q.id!}>{q.questionText}</SelectItem>)}
+                  <SelectItem value="EQUALS">Equals</SelectItem>
+                  <SelectItem value="NOT_EQUALS">Not Equals</SelectItem>
+                  <SelectItem value="GREATER_THAN">Greater Than</SelectItem>
+                  <SelectItem value="LESS_THAN">Less Than</SelectItem>
+                  <SelectItem value="CONTAINS">Contains</SelectItem>
+                  <SelectItem value="NOT_CONTAINS">Does Not Contain</SelectItem>
+                  {sourceQuestion?.answerType === 'Numeric' && (
+                    <SelectItem value="IN_RANGE">In Range</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
-            </div>
-
-            {/* Conditions */}
-            <div className="space-y-3">
-              <Label className="flex items-center">
-                Conditions
-                <TooltipProvider>
-                  <Tooltip delayDuration={300}>
-                    <TooltipTrigger asChild>
-                      <HelpCircle className="h-4 w-4 ml-1.5 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Add multiple conditions with AND/OR logic for complex rules.</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </Label>
-              {currentRule.conditions?.map((condition, index) => (
-                <div key={index} className="grid grid-cols-4 gap-2 items-start">
-                  {index > 0 && (
-                    <Select
-                      value={condition.operator}
-                      onValueChange={(val: 'AND' | 'OR') => {
+              <div className="flex items-center gap-2">
+                {condition.type === 'IN_RANGE' ? (
+                  <div className="flex gap-1">
+                    <Input
+                      type="number"
+                      placeholder="Min"
+                      value={Array.isArray(condition.value) ? condition.value[0] : ''}
+                      onChange={e => {
                         const newConditions = [...(currentRule.conditions || [])];
-                        newConditions[index] = { ...condition, operator: val };
+                        const currentValue = Array.isArray(condition.value) ? condition.value : [0, 0];
+                        newConditions[index] = { ...condition, value: [Number(e.target.value), currentValue[1]] };
                         setCurrentRule(prev => ({ ...prev, conditions: newConditions }));
                       }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="AND/OR" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="AND">AND</SelectItem>
-                        <SelectItem value="OR">OR</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                  <Select
-                    value={condition.type}
-                    onValueChange={(val: LogicRule['conditions'][0]['type']) => {
+                      className="w-20"
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Max"
+                      value={Array.isArray(condition.value) ? condition.value[1] : ''}
+                      onChange={e => {
+                        const newConditions = [...(currentRule.conditions || [])];
+                        const currentValue = Array.isArray(condition.value) ? condition.value : [0, 0];
+                        newConditions[index] = { ...condition, value: [currentValue[0], Number(e.target.value)] };
+                        setCurrentRule(prev => ({ ...prev, conditions: newConditions }));
+                      }}
+                      className="w-20"
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    type={sourceQuestion?.answerType === 'Numeric' ? 'number' : 'text'}
+                    placeholder="Value"
+                    value={Array.isArray(condition.value) ? '' : condition.value || ''}
+                    onChange={e => {
                       const newConditions = [...(currentRule.conditions || [])];
-                      newConditions[index] = { ...condition, type: val };
+                      newConditions[index] = { 
+                        ...condition, 
+                        value: sourceQuestion?.answerType === 'Numeric' ? Number(e.target.value) : e.target.value 
+                      };
                       setCurrentRule(prev => ({ ...prev, conditions: newConditions }));
                     }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select condition..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="EQUALS">Equals</SelectItem>
-                      <SelectItem value="NOT_EQUALS">Not Equals</SelectItem>
-                      <SelectItem value="GREATER_THAN">Greater Than</SelectItem>
-                      <SelectItem value="LESS_THAN">Less Than</SelectItem>
-                      <SelectItem value="IN_RANGE">In Range</SelectItem>
-                      <SelectItem value="CONTAINS">Contains</SelectItem>
-                      <SelectItem value="NOT_CONTAINS">Not Contains</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  />
+                )}
+                {currentRule.conditions && currentRule.conditions.length > 1 && (
+                  <Button type="button" variant="ghost" size="icon" onClick={() => removeCondition(index)} className="h-8 w-8 text-destructive">
+                    <Trash2Icon className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addCondition}
+            className="mt-2"
+          >
+            <PlusCircleIcon className="mr-2 h-4 w-4" /> Add Condition
+          </Button>
+        </div>
 
-                  {/* Value input based on condition type */}
-                  {condition.type === 'IN_RANGE' ? (
-                    <div className="col-span-2 grid grid-cols-2 gap-2">
-                      <Input
-                        type="number"
-                        placeholder="Min"
-                        value={(condition.value as number[])?.[0] || ''}
-                        onChange={e => {
-                          const newConditions = [...(currentRule.conditions || [])];
-                          const currentValue = condition.value as number[] || [0, 0];
-                          newConditions[index] = {
-                            ...condition,
-                            value: [Number(e.target.value), currentValue[1]]
-                          };
-                          setCurrentRule(prev => ({ ...prev, conditions: newConditions }));
-                        }}
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Max"
-                        value={(condition.value as number[])?.[1] || ''}
-                        onChange={e => {
-                          const newConditions = [...(currentRule.conditions || [])];
-                          const currentValue = condition.value as number[] || [0, 0];
-                          newConditions[index] = {
-                            ...condition,
-                            value: [currentValue[0], Number(e.target.value)]
-                          };
-                          setCurrentRule(prev => ({ ...prev, conditions: newConditions }));
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="col-span-2 flex gap-2">
-                      <Input
-                        type={sourceQuestion?.answerType === 'Numeric' ? 'number' : 'text'}
-                        placeholder="Value"
-                        value={condition.value as string}
-                        onChange={e => {
-                          const newConditions = [...(currentRule.conditions || [])];
-                          newConditions[index] = {
-                            ...condition,
-                            value: sourceQuestion?.answerType === 'Numeric' ? Number(e.target.value) : e.target.value
-                          };
-                          setCurrentRule(prev => ({ ...prev, conditions: newConditions }));
-                        }}
-                      />
-                      <Button variant="ghost" size="icon" onClick={() => removeCondition(index)} className="text-destructive">
-                        <Trash2Icon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                  {index === 0 && currentRule.conditions && currentRule.conditions.length === 1 && (
-                     <div className="col-span-1"/> // Spacer to align remove button
-                  )}
-                </div>
+        <div className="space-y-1">
+          <Label>Then navigate to</Label>
+          <Select
+            value={currentRule.targetQuestionId}
+            onValueChange={(val: string) => setCurrentRule({ ...currentRule, targetQuestionId: val })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select next question..." />
+            </SelectTrigger>
+            <SelectContent>
+              {availableTargetQuestions.map(q => (
+                <SelectItem key={q.id} value={q.id!}>
+                  {q.questionText.length > 50 ? `${q.questionText.substring(0, 50)}...` : q.questionText}
+                </SelectItem>
               ))}
-              <Button variant="outline" size="sm" onClick={addCondition}>
-                <PlusCircleIcon className="mr-2 h-4 w-4" /> Add Condition Group
-              </Button>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* Default Rule Checkbox */}
+        {currentRule.sourceQuestionId && (
+            <div className="flex items-center space-x-2 pt-2">
+                <Checkbox 
+                    id={`default-rule-${currentRule.id}`} 
+                    checked={currentRule.isDefault || false}
+                    onCheckedChange={(checked) => setCurrentRule(prev => ({...prev, isDefault: !!checked}))}
+                />
+                <Label htmlFor={`default-rule-${currentRule.id}`} className="text-sm font-normal">
+                    Make this the default path if no conditions for &quot;{getQuestionTextById(currentRule.sourceQuestionId!)}&quot; are met.
+                </Label>
             </div>
+        )}
 
-            {/* Target Question */}
-            <div className="space-y-1">
-              <Label>Then navigate to</Label>
-              <Select
-                value={currentRule.targetQuestionId}
-                onValueChange={(val: string) => setCurrentRule({ ...currentRule, targetQuestionId: val })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select next question..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableTargetQuestions.map(q => (
-                    <SelectItem key={q.id} value={q.id!}>
-                      {q.questionText.length > 50 ? `${q.questionText.substring(0, 50)}...` : q.questionText}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* Default Rule Checkbox */}
-            {currentRule.sourceQuestionId && (
-                <div className="flex items-center space-x-2 pt-2">
-                    <Checkbox 
-                        id={`default-rule-${currentRule.id}`} 
-                        checked={currentRule.isDefault || false}
-                        onCheckedChange={(checked) => setCurrentRule(prev => ({...prev, isDefault: !!checked}))}
-                    />
-                    <Label htmlFor={`default-rule-${currentRule.id}`} className="text-sm font-normal">
-                        Make this the default path if no conditions for &quot;{getQuestionTextById(currentRule.sourceQuestionId!)}&quot; are met.
-                    </Label>
-                </div>
-            )}
-
-          </div>
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="ghost" onClick={() => { setEditingRule(null); setCurrentRule({ id: nanoid(5), conditions: [{ type: 'EQUALS', value: '', operator: 'AND' }] }); }}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave}>{editingRule ? "Update Rule" : "Save Rule"}</Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  const renderRuleForm = () => {
-    return (
-      <Tabs value={ruleBuilderMode} onValueChange={(value) => setRuleBuilderMode(value as 'quick' | 'advanced')} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="quick">Quick Rule</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced Builder</TabsTrigger>
-        </TabsList>
-        <TabsContent value="quick" className="mt-0">
-          {renderQuickRuleForm()}
-        </TabsContent>
-        <TabsContent value="advanced" className="mt-0">
-          {renderAdvancedRuleForm()}
-        </TabsContent>
-      </Tabs>
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button variant="ghost" onClick={() => setIsRuleModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave}>{editingRule ? "Update Rule" : "Save Rule"}</Button>
+        </div>
+      </div>
     );
   };
 
   return (
     <div className="space-y-6 p-1">
-      <div>
-        <h2 className="text-2xl font-semibold">Conditional Logic</h2>
-        <p className="text-muted-foreground mt-1">
-          Create rules to guide users through the flow based on their answers. Example: IF &apos;Question A&apos; is &apos;Yes&apos; THEN go to &apos;Question C&apos;.
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-semibold">Conditional Logic</h2>
+          <p className="text-muted-foreground mt-1">
+            Create rules to guide users through the flow based on their answers.
+          </p>
+        </div>
+        <Button onClick={openNewRuleModal}>
+          <PlusCircleIcon className="mr-2 h-4 w-4" /> Add Rule
+        </Button>
       </div>
 
-      {renderRuleForm()}
+      {/* Rule Modal */}
+      <Dialog open={isRuleModalOpen} onOpenChange={(open) => { 
+        if (!open) {
+          setEditingRule(null);
+          setCurrentRule({ id: nanoid(5), conditions: [{ type: 'EQUALS', value: '', operator: 'AND' }] });
+        }
+        setIsRuleModalOpen(open); 
+      }}>
+        <DialogContent className="sm:max-w-md md:max-w-lg lg:max-w-2xl p-0 flex flex-col max-h-[85vh]">
+          <DialogHeader className="p-6 pb-4 flex-shrink-0">
+            <DialogTitle className="text-2xl flex items-center">
+              {editingRule ? "Edit Logic Rule" : "Add New Logic Rule"}
+              <TooltipProvider>
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 ml-2 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Create conditional logic to control the flow based on user responses</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </DialogTitle>
+            <DialogDescription>
+              Configure conditional logic to route users through different paths based on their answers.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="px-6 space-y-4 flex-1 overflow-y-auto min-h-0">
+            <Tabs value={ruleBuilderMode} onValueChange={(value) => setRuleBuilderMode(value as 'quick' | 'advanced')} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="quick">Quick Rule</TabsTrigger>
+                <TabsTrigger value="advanced">Advanced Builder</TabsTrigger>
+              </TabsList>
+              <TabsContent value="quick" className="mt-4">
+                {renderQuickRuleForm()}
+              </TabsContent>
+              <TabsContent value="advanced" className="mt-4">
+                {renderAdvancedRuleForm()}
+              </TabsContent>
+            </Tabs>
+            
+            {/* Add some bottom padding to ensure footer doesn't overlap content */}
+            <div className="pb-4"></div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
+      {/* Display existing rules or empty state */}
       {logicRules.length === 0 ? (
-        <div className="text-center py-10 border-2 border-dashed rounded-lg">
-          <ArrowRightIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-2 text-lg font-medium">No logic rules yet</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Add rules to create conditional paths in your flow.
+        <div className="text-center py-10 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+          <ArrowRightIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+          <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-gray-100">No logic rules yet</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Click &quot;Add Rule&quot; to create conditional paths in your flow.
           </p>
         </div>
       ) : (
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Existing Logic Rules</h3>
+          <h3 className="text-lg font-medium">Current Rules</h3>
           {logicRules.map(rule => (
-            <Card key={rule.id} className="bg-muted/50">
+            <Card key={rule.id} className="border bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow">
               <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1 flex-grow">
-                    <p className="text-sm font-semibold">
-                      IF <Badge variant="secondary" className="mr-1">{getQuestionTextById(rule.sourceQuestionId)}</Badge>
-                      {rule.conditions.map((cond, idx) => (
-                        <React.Fragment key={idx}>
-                          {idx > 0 && <span className="font-bold text-xs mx-1">{cond.operator}</span>}
-                          <Badge variant="outline" className="mx-0.5">
-                            {cond.type} &quot;{String(cond.value)}&quot;
-                          </Badge>
-                        </React.Fragment>
-                      ))}
-                    </p>
-                    <p className="text-sm">
-                      THEN go to <Badge variant="secondary">{getQuestionTextById(rule.targetQuestionId)}</Badge>
-                      {rule.isDefault && <Badge variant="default" className="ml-2 text-xs">DEFAULT</Badge>}
-                    </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 text-sm">
+                    <span>When <strong>&quot;{getQuestionTextById(rule.sourceQuestionId)}&quot;</strong></span>
+                    <ArrowRightIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    
+                    {rule.conditions.map((condition, condIndex) => (
+                      <React.Fragment key={condIndex}>
+                        {condIndex > 0 && <span className="font-medium">{condition.operator}</span>}
+                        <span>
+                          {condition.type === 'EQUALS' && 'equals'}
+                          {condition.type === 'NOT_EQUALS' && 'does not equal'}
+                          {condition.type === 'GREATER_THAN' && 'is greater than'}
+                          {condition.type === 'LESS_THAN' && 'is less than'}
+                          {condition.type === 'IN_RANGE' && 'is between'}
+                          {condition.type === 'CONTAINS' && 'contains'}
+                          {condition.type === 'NOT_CONTAINS' && 'does not contain'}
+                          {' '}
+                          <strong>
+                            {Array.isArray(condition.value)
+                              ? `${condition.value[0]} and ${condition.value[1]}`
+                              : condition.value}
+                          </strong>
+                        </span>
+                      </React.Fragment>
+                    ))}
+                    <ArrowRightIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    <span>then go to <strong>&quot;{getQuestionTextById(rule.targetQuestionId)}&quot;</strong></span>
+                    {rule.isDefault && <Badge variant="secondary">Default</Badge>}
                   </div>
+
                   <div className="flex gap-1 ml-2">
-                    <Button variant="ghost" size="icon" onClick={() => startEditRule(rule)} className="h-8 w-8">
+                    <Button variant="ghost" size="icon" onClick={() => openEditRuleModal(rule)} className="h-8 w-8 text-gray-500 hover:text-blue-600">
                         <Edit2Icon className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => deleteRule(rule.id)} className="h-8 w-8 text-destructive">
+                    <Button variant="ghost" size="icon" onClick={() => deleteRule(rule.id)} className="h-8 w-8 text-gray-500 hover:text-destructive">
                       <Trash2Icon className="h-4 w-4" />
                     </Button>
                   </div>
