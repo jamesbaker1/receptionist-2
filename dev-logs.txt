@@ -1,0 +1,37 @@
+
+> lua@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.3.2
+   - Local:        http://localhost:3000
+   - Network:      http://172.20.10.2:3000
+   - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 1704ms
+ ○ Compiling /api/auth/[...nextauth] ...
+ ✓ Compiled /api/auth/[...nextauth] in 544ms (502 modules)
+[31m[auth][error][0m UnknownAction: Unsupported action. Read more at https://errors.authjs.dev#unknownaction
+    at Object.signin (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/pages/index.js:66:23)
+    at AuthInternal (webpack-internal:///(rsc)/./node_modules/@auth/core/lib/index.js:53:31)
+    at async Auth (webpack-internal:///(rsc)/./node_modules/@auth/core/index.js:130:34)
+    at async AppRouteRouteModule.do (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:26:34112)
+    at async AppRouteRouteModule.handle (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:26:41338)
+    at async doRender (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/server/base-server.js:1513:42)
+    at async DevServer.renderToResponseWithComponentsImpl (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/server/base-server.js:1915:28)
+    at async DevServer.renderPageComponent (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/server/base-server.js:2403:24)
+    at async DevServer.renderToResponseImpl (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/server/base-server.js:2440:32)
+    at async DevServer.pipeImpl (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/server/base-server.js:1007:25)
+    at async NextNodeServer.handleCatchallRenderRequest (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/server/next-server.js:305:17)
+    at async DevServer.handleRequestImpl (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/server/base-server.js:899:17)
+    at async /Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/server/dev/next-dev-server.js:371:20
+    at async Span.traceAsyncFn (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/trace/trace.js:157:20)
+    at async DevServer.handleRequest (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/server/dev/next-dev-server.js:368:24)
+    at async invokeRender (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/server/lib/router-server.js:237:21)
+    at async handleRequest (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/server/lib/router-server.js:428:24)
+    at async requestHandlerImpl (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/server/lib/router-server.js:452:13)
+    at async Server.requestListener (/Users/jamesbaker/Desktop/code/receptionist-2/receptionist/node_modules/next/dist/server/lib/start-server.js:158:13)
+ GET /api/auth/signin/clio 302 in 1100ms
+   Reload env: .env.local
+ ✓ Compiled in 86ms (502 modules)
+[?25h

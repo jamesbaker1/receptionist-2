@@ -11,7 +11,7 @@ export function useAuthGuard() {
   useEffect(() => {
     if (status === "loading") return
     if (!session) {
-      router.push("/auth/signin")
+      // router.push("/auth/signin")
     }
   }, [session, status, router])
 

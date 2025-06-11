@@ -86,6 +86,15 @@ export default function DashboardPage() {
   const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
+  const effectiveSession = session || {
+    user: {
+      name: "Guest User",
+      email: "guest@example.com",
+      image: "",
+      firmName: "Guest Firm"
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -98,7 +107,7 @@ export default function DashboardPage() {
   }
 
   if (!session) {
-    return null // Will redirect via useAuthGuard
+    // return null // Will redirect via useAuthGuard
   }
 
   // Filter flows based on current filters
@@ -120,9 +129,9 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Welcome back, {session.user?.name?.split(' ')[0]}</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Welcome back, {effectiveSession.user?.name?.split(' ')[0]}</h1>
               <p className="text-muted-foreground mt-1">
-                {session.user?.firmName ? `${session.user.firmName} • Clio Account` : "Clio Account"}
+                {effectiveSession.user?.firmName ? `${effectiveSession.user.firmName} • Clio Account` : "Clio Account"}
               </p>
             </div>
           </div>
@@ -139,9 +148,9 @@ export default function DashboardPage() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-10 w-10 rounded-full">
                   <Avatar>
-                    <AvatarImage src={session.user?.image || undefined} />
+                    <AvatarImage src={effectiveSession.user?.image || undefined} />
                     <AvatarFallback>
-                      {session.user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
+                      {effectiveSession.user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -149,8 +158,8 @@ export default function DashboardPage() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{session.user?.name}</p>
-                    <p className="text-xs text-muted-foreground">{session.user?.email}</p>
+                    <p className="text-sm font-medium">{effectiveSession.user?.name}</p>
+                    <p className="text-xs text-muted-foreground">{effectiveSession.user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

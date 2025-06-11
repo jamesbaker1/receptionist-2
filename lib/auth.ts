@@ -1,7 +1,6 @@
 import NextAuth from "next-auth"
 
 const CLIO_REGION = process.env.CLIO_REGION || "app.clio.com"
-const BASE_URL = "http://127.0.0.1:3000"
 
 interface ClioProfile {
   data: {
@@ -29,7 +28,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         params: {
           scope: "read write",
           response_type: "code",
-          redirect_uri: `${BASE_URL}/api/auth/callback/clio`,
         },
       },
       token: `https://${CLIO_REGION}/oauth/token`,
@@ -80,7 +78,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async redirect({ url }) {
       // Force use of 127.0.0.1 instead of localhost - this is the key fix
-      const correctedBaseUrl = BASE_URL
+      const correctedBaseUrl = process.env.NEXTAUTH_URL || "http://127.0.0.1:3000"
       
       // Always redirect to the corrected base URL
       if (url.startsWith("/")) return `${correctedBaseUrl}${url}`

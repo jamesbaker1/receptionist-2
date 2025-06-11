@@ -234,113 +234,85 @@ function NewFlowPageContent() {
         <Progress value={progress} className="h-2" />
         
         {/* Step Indicator - Desktop */}
-        <div className="hidden lg:flex justify-between items-center relative px-6">
-          {steps.map((step, index) => (
-            <React.Fragment key={step.id}>
-              <div className="flex flex-col items-center z-10 relative">
-                <button
-                  onClick={() => setCurrentStep(step.id)}
-                  disabled={step.id > currentStep && !flowData[`step${step.id-1}Complete`]}
-                  className={`
-                    flex items-center justify-center w-12 h-12 rounded-full border-2 
-                    transition-all duration-300 cursor-pointer disabled:cursor-not-allowed
-                    ${currentStep === step.id 
-                      ? 'bg-primary border-primary text-primary-foreground shadow-lg scale-110' 
-                      : currentStep > step.id 
-                      ? 'bg-primary/20 border-primary text-primary hover:bg-primary/30' 
-                      : 'bg-muted border-muted-foreground/20 text-muted-foreground disabled:opacity-50'
-                    }
-                  `}
-                >
-                  {currentStep > step.id ? <CheckCircle className="h-6 w-6" /> : <span className="text-sm font-semibold">{step.id}</span>}
-                </button>
-                <p className={`
-                  mt-2 text-xs text-center max-w-[100px]
-                  ${currentStep === step.id 
-                    ? 'text-foreground font-semibold' 
-                    : currentStep > step.id 
-                    ? 'text-primary' 
-                    : 'text-muted-foreground'
-                  }
-                `}>
-                  {step.name}
-                </p>
-              </div>
-              {index < steps.length - 1 && (
-                <div className={`
-                  absolute top-6 h-0.5 transition-all duration-500
-                  ${currentStep > step.id ? 'bg-primary' : 'bg-muted-foreground/20'}
-                `} 
-                style={{
-                  left: `calc(${(100 / (steps.length - 1)) * index}% + 24px + ${100 / (steps.length - 1) * 0.5}%)`,
-                  width: `calc(${100 / (steps.length - 1)}% - 48px)`
-                }}
-              ></div>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+        <div className="hidden lg:flex items-start w-full px-4 py-6">
+            {steps.map((step, index) => {
+                const isCompleted = !!flowData[`step${step.id}Complete`] || currentStep > step.id;
+                const isActive = currentStep === step.id;
+                const isLastStep = index === steps.length - 1;
 
-        {/* Step Content with Animation */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="bg-card rounded-lg border p-6 shadow-sm w-full"
-          >
-            {currentStep === 1 && (
-              <Step1NameTemplate
-                onSubmit={handleNextStep}
-                initialData={flowData.step1Data}
-              />
-            )}
-            {currentStep === 2 && (
-              <StepIntroductionGreeting
-                onSubmit={handleNextStep}
-                onBack={handlePreviousStep}
-                initialData={flowData.stepIntroductionData}
-              />
-            )}
-            {currentStep === 3 && (
-              <Step2Questions
-                onSubmit={handleNextStep}
-                onBack={handlePreviousStep}
-                initialData={flowData.step2Data}
-              />
-            )}
-            {currentStep === 4 && (
-              <Step3ConditionalLogic
-                onSubmit={handleNextStep}
-                onBack={handlePreviousStep}
-                initialData={flowData.step3Data}
-                questions={flowData.step2Data?.questions || []}
-              />
-            )}
-            {currentStep === 5 && (
-              <Step4ToolCalls
-                onSubmit={handleNextStep}
-                onBack={handlePreviousStep}
-              />
-            )}
-            {currentStep === 6 && (
-              <StepGoodbyeGreeting
-                onSubmit={handleNextStep}
-                onBack={handlePreviousStep}
-                initialData={flowData.stepGoodbyeData}
-              />
-            )}
-            {currentStep === 7 && (
-              <Step5ReviewPublish
-                flowData={flowData}
-                onPublish={handlePublish}
-                onBack={handlePreviousStep}
-              />
-            )}
-          </motion.div>
-        </AnimatePresence>
+                return (
+                    <React.Fragment key={step.id}>
+                        {/* Bubble + Text */}
+                        <div className="flex flex-col items-center flex-shrink-0 w-32">
+                            <button
+                                onClick={() => setCurrentStep(step.id)}
+                                disabled={!isCompleted && step.id > currentStep}
+                                className={`flex items-center justify-center w-10 h-10 rounded-full border-2 bg-background transition-all duration-300 cursor-pointer disabled:cursor-not-allowed
+                                    ${isActive 
+                                        ? 'border-primary scale-110 shadow-lg' 
+                                        : isCompleted
+                                        ? 'border-primary hover:border-primary/80' 
+                                        : 'border-gray-300 hover:border-gray-400'
+                                    }`}
+                            >
+                                {isCompleted && !isActive ? (
+                                    <CheckCircle className="w-5 h-5 text-primary" />
+                                ) : (
+                                    <span className={`text-sm font-bold ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                                        {step.id}
+                                    </span>
+                                )}
+                            </button>
+                            <p className={`text-center text-xs mt-2 font-medium break-words ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                                {step.name}
+                            </p>
+                        </div>
+
+                        {/* Connector Line */}
+                        {!isLastStep && (
+                            <div className={`flex-auto border-t-2 mt-5 transition-colors duration-500 ease-in-out ${
+                                isCompleted ? 'border-primary' : 'border-gray-300'
+                            }`} />
+                        )}
+                    </React.Fragment>
+                );
+            })}
+        </div>
+        
+        {/* Active Step Content */}
+        <div className="bg-card p-8 rounded-xl shadow-lg border min-h-[400px]">
+           <AnimatePresence mode="wait">
+             <motion.div
+               key={currentStep}
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               exit={{ opacity: 0, y: -20 }}
+               transition={{ duration: 0.3 }}
+             >
+               {(() => {
+                  const StepComponent = steps[currentStep - 1].component;
+                  const initialDataKey = steps[currentStep - 1].dataKey;
+                  
+                  const props: any = {
+                    onSubmit: handleNextStep,
+                    onBack: handlePreviousStep,
+                    initialData: flowData[initialDataKey],
+                  };
+
+                  if (currentStep === 4) { // Step3ConditionalLogic
+                    props.questions = flowData.step2Data?.questions || [];
+                  }
+                  
+                  if (currentStep === 7) { // Step5ReviewPublish
+                    props.flowData = flowData;
+                    props.onPublish = handlePublish;
+                  }
+
+                  return <StepComponent {...props} />;
+               })()}
+             </motion.div>
+           </AnimatePresence>
+         </div>
       </div>
     </div>
   );
