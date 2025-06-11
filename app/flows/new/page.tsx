@@ -42,6 +42,19 @@ interface Step4Data {
         transferNumber?: string;
         triggerQuestion?: string;
         triggerResponse?: string;
+        emailTemplate?: string;
+        webhookUrl?: string;
+        priority?: 'low' | 'medium' | 'high';
+        syncContacts?: boolean;
+        createMatters?: boolean;
+        createTasks?: boolean;
+        assignToUser?: string;
+        hotTransfers?: Array<{
+          id: string;
+          transferNumber: string;
+          triggerQuestion: string;
+          triggerResponse: string;
+        }>;
       };
     };
   };
@@ -300,6 +313,10 @@ function NewFlowPageContent() {
                   };
 
                   if (currentStep === 4) { // Step3ConditionalLogic
+                    props.questions = flowData.step2Data?.questions || [];
+                  }
+                  
+                  if (currentStep === 5) { // Step4ToolCalls
                     props.questions = flowData.step2Data?.questions || [];
                   }
                   

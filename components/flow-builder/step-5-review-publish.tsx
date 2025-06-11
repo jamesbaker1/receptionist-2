@@ -38,6 +38,19 @@ interface Step4Data {
                 transferNumber?: string;
                 triggerQuestion?: string;
                 triggerResponse?: string;
+                emailTemplate?: string;
+                webhookUrl?: string;
+                priority?: 'low' | 'medium' | 'high';
+                syncContacts?: boolean;
+                createMatters?: boolean;
+                createTasks?: boolean;
+                assignToUser?: string;
+                hotTransfers?: Array<{
+                    id: string;
+                    transferNumber: string;
+                    triggerQuestion: string;
+                    triggerResponse: string;
+                }>;
             };
         };
     };
@@ -231,28 +244,77 @@ export default function Step5ReviewPublish({ flowData, onPublish, onBack }: Step
             <AccordionContent className="pt-2 pl-2 space-y-2">
               {Object.entries(step4Data.toolsConfig).map(([toolId, toolConfig]) => (
                 <Card key={toolId} className='p-3 bg-white dark:bg-gray-800 shadow-sm'>
-                  <p className="font-medium text-gray-800 dark:text-gray-100">{toolId}</p>
+                  <p className="font-medium text-gray-800 dark:text-gray-100 capitalize">{toolId.replace('-', ' ')}</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     {toolConfig.enabled ? 'Enabled' : 'Disabled'}
                   </p>
-                  {toolConfig.config && (
-                    <>
-                      {toolConfig.config.transferNumber && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          Transfer Number: {toolConfig.config.transferNumber}
+                  {toolConfig.config && toolConfig.enabled && (
+                    <div className="mt-2 space-y-1">
+                      {/* Hot Transfer Rules */}
+                      {toolId === 'hot-transfer' && toolConfig.config.hotTransfers && toolConfig.config.hotTransfers.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Transfer Rules:</p>
+                          {toolConfig.config.hotTransfers.map((transfer, index) => (
+                            <div key={transfer.id} className="pl-3 py-2 bg-gray-50 dark:bg-gray-700 rounded text-xs">
+                              <p><strong>Rule #{index + 1}:</strong></p>
+                              <p>Phone: {transfer.transferNumber}</p>
+                              <p>Question: {getQuestionTextById(transfer.triggerQuestion)}</p>
+                              <p>Response: {transfer.triggerResponse}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Legacy single transfer (backward compatibility) */}
+                      {toolConfig.config.transferNumber && !toolConfig.config.hotTransfers && (
+                        <>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Transfer Number: {toolConfig.config.transferNumber}
+                          </p>
+                          {toolConfig.config.triggerQuestion && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Trigger Question: {getQuestionTextById(toolConfig.config.triggerQuestion)}
+                            </p>
+                          )}
+                          {toolConfig.config.triggerResponse && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Trigger Response: {toolConfig.config.triggerResponse}
+                            </p>
+                          )}
+                        </>
+                      )}
+                      
+                      {/* Email configuration */}
+                      {toolConfig.config.emailTemplate && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Email Template: {toolConfig.config.emailTemplate.substring(0, 50)}...
                         </p>
                       )}
-                      {toolConfig.config.triggerQuestion && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          Trigger Question: {toolConfig.config.triggerQuestion}
+                      
+                      {/* Priority */}
+                      {toolConfig.config.priority && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Priority: {toolConfig.config.priority}
                         </p>
                       )}
-                      {toolConfig.config.triggerResponse && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          Trigger Response: {toolConfig.config.triggerResponse}
+                      
+                      {/* Clio settings */}
+                      {toolConfig.config.syncContacts && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          ✓ Sync contacts to Clio
                         </p>
                       )}
-                    </>
+                      {toolConfig.config.createMatters && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          ✓ Create matters in Clio
+                        </p>
+                      )}
+                      {toolConfig.config.createTasks && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          ✓ Create follow-up tasks
+                        </p>
+                      )}
+                    </div>
                   )}
                 </Card>
               ))}

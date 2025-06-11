@@ -84,7 +84,7 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
   const form = useForm<QuestionFormValues>({
     resolver: zodResolver(questionSchema),
     defaultValues: {
-      id: initialData?.id || `q_${Date.now()}`,
+      id: initialData?.id || "",
       questionText: initialData?.questionText || "",
       answerType: initialData?.answerType || "Text",
       radioOptions: initialData?.answerType === "Radio" 
@@ -125,7 +125,7 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
   React.useEffect(() => {
     // Reset form if initialData changes (e.g. opening modal for new vs edit)
     form.reset({
-      id: initialData?.id || `q_${Date.now()}`,
+      id: initialData?.id || "",
       questionText: initialData?.questionText || "",
       answerType: initialData?.answerType || "Text",
       radioOptions: initialData?.answerType === "Radio" 
@@ -592,12 +592,7 @@ export default function QuestionFormModal({ isOpen, onOpenChange, onSubmit, init
               <DialogClose asChild>
                 <Button type="button" variant="outline" onClick={() => { form.reset(); onOpenChange(false); }}>Cancel</Button>
               </DialogClose>
-              <Button type="submit" onClick={() => {
-                console.log("Save button clicked!");
-                console.log("Form is valid:", form.formState.isValid);
-                console.log("Form errors:", form.formState.errors);
-                console.log("Current form values:", form.getValues());
-              }}>Save Question</Button>
+              <Button type="submit">Save Question</Button>
             </DialogFooter>
           </form>
         </Form>

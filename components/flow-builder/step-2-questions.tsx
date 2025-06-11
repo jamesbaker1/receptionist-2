@@ -17,16 +17,22 @@ export default function Step2Questions({ onSubmit, initialData, onBack }: Step2Q
   const [questions, setQuestions] = useState<QuestionFormValues[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<QuestionFormValues | undefined>(undefined);
+  const [questionCounter, setQuestionCounter] = useState(0);
+
+  // Generate unique ID for questions
+  const generateQuestionId = () => {
+    const id = `q_${Date.now()}_${questionCounter}`;
+    setQuestionCounter(prev => prev + 1);
+    return id;
+  };
 
   useEffect(() => {
     if (initialData?.questions) {
-      if (JSON.stringify(questions) !== JSON.stringify(initialData.questions)) {
-        setQuestions(initialData.questions.map(q => ({...q})));
-      }
-    } else if (questions.length > 0) {
-        setQuestions([]);
+      setQuestions(initialData.questions.map(q => ({...q})));
+    } else {
+      setQuestions([]);
     }
-  }, [initialData?.questions, questions]);
+  }, [initialData?.questions]);
 
   const handleAddQuestion = (data: QuestionFormValues) => {
     console.log("=== HANDLE ADD QUESTION DEBUG ===");
@@ -39,7 +45,7 @@ export default function Step2Questions({ onSubmit, initialData, onBack }: Step2Q
       setQuestions(prev => prev.map(q => q.id === editingQuestion.id ? { ...data, id: editingQuestion.id } : q));
     } else {
       console.log("Adding new question");
-      const newQuestion = { ...data, id: data.id || `q_${Date.now()}_${questions.length}` };
+      const newQuestion = { ...data, id: data.id || generateQuestionId() };
       console.log("New question to add:", newQuestion);
       setQuestions(prev => {
         const updated = [...prev, newQuestion];
@@ -96,16 +102,6 @@ export default function Step2Questions({ onSubmit, initialData, onBack }: Step2Q
         <Button onClick={openNewQuestionModal}>
           <PlusCircleIcon className="mr-2 h-4 w-4" /> Add Question
         </Button>
-      </div>
-
-      {/* Debug info */}
-      <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
-        <div>Questions count: {questions.length}</div>
-        {questions.length > 0 && (
-          <pre className="mt-2 text-xs overflow-auto max-h-32">
-            {JSON.stringify(questions, null, 2)}
-          </pre>
-        )}
       </div>
 
       {questions.length === 0 ? (
